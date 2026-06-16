@@ -1,13 +1,146 @@
-/* LAMP Primer Designer — v2 (algoritmo real de desenho de primers)
+/* LAMPrime — desenho de primers LAMP no navegador (algoritmo real)
    Tm nearest-neighbor (SantaLucia 1998) + correção de sal e equivalente
    monovalente de Mg2+ (von Ahsen 2001); GC%; complexidade linguística (LC%);
    estabilidade ΔG das extremidades (critério Eiken ≤ -4 kcal/mol);
    enumeração das regiões F3/F2/F1/B1/B2/B3 com restrições de distância
    (PrimerExplorer V5 / NEB) e montagem de FIP/BIP/LF/LB.
+   Estruturas secundárias (hairpin/homo/heterodímero) @63 °C re-ranqueiam os finalistas.
+   i18n PT/EN embutido (botão de idioma), sem dependências externas.
    Refs: Notomi 2000; Nagamine 2002; Tomita 2008; SantaLucia 1998; von Ahsen 2001. */
 (function() {
   const qs = (sel, el=document) => el.querySelector(sel);
   const qsa = (sel, el=document) => Array.from(el.querySelectorAll(sel));
+
+  // ===================================================================
+  // i18n — dicionário PT/EN. Strings: aplicadas via [data-i18n*]. Funções:
+  // usadas no render dinâmico dos resultados (interpolação).
+  // ===================================================================
+  const I18N = {
+    pt: {
+      'tab.input':'Entrada', 'tab.params':'Parâmetros', 'tab.results':'Resultados',
+      'seq.h2':'Sequência alvo',
+      'seq.help':'Cole a sequência (A, T, G, C) ou informe um identificador (ex.: GenBank).',
+      'id.label':'Identificador (opcional)', 'id.ph':'Ex.: NC_045512, MN908947, etc.',
+      'seq.label':'Sequência', 'seq.ph':'Cole aqui a sequência de DNA...',
+      'btn.fasta':'Carregar FASTA', 'btn.clear':'Limpar', 'btn.run':'Gerar primers',
+      'refs.h3':'Referências e Publicações',
+      'refs.lead':'Referências-chave implementadas no algoritmo do LAMPrime:',
+      'refs.tools':'Regras de geometria dos primers: Eiken PrimerExplorer V5 (https://primerexplorer.jp/) e New England Biolabs — LAMP Primer Design (https://lamp.neb.com/).',
+      'refs.github':'Código-fonte aberto (MIT): <a href="https://github.com/luizdione/LAMPrime" target="_blank" rel="noopener" style="color:var(--accent);">github.com/luizdione/LAMPrime</a>',
+      'params.basic.h2':'Configurações básicas',
+      'tm.inner.label':'Tm alvo (F1c/B1c/LF/LB)', 'tm.outer.label':'Tm alvo (F2/B2/F3/B3)',
+      'size.f3b3.label':'Tamanho dos primers (F3/B3)', 'size.lflb.label':'Tamanho dos primers (LF/LB)',
+      'loopseq.label':'Linker do loop interno (FIP/BIP) — 5´TTTTTT 3´',
+      'fip.label':'Tamanho total do FIP (F1c-loop-F2)', 'bip.label':'Tamanho total do BIP (B1c-loop-B2)',
+      'gc.label':'GC esperado',
+      'gc.opt.4060':'40–60%', 'gc.opt.4065':'40–65% (teto canônico Eiken)', 'gc.opt.5060':'50–60% (ótimo)',
+      'gc.opt.3565':'35–65%', 'gc.opt.4555':'45–55%',
+      'loops.label':'Loop primers',
+      'loops.opt.auto':'Automático', 'loops.opt.on':'Forçar inclusão', 'loops.opt.off':'Não incluir',
+      'lc.label':'Complexidade linguística mínima (LC%)',
+      'lc.help':'A complexidade linguística (LC%) mede a “riqueza de vocabulário” de uma sequência genética, a partir do número de combinações distintas de nucleotídeos (k-mers) observadas em relação ao total teoricamente possível, expresso em porcentagem (100% = máximo). Intervalo permitido: 70–90%. Valor padrão: 75%.',
+      'react.h2':'Condições de reação',
+      'pen.h2':'Penalidades e ranking',
+      'pen.f1cb1c.label':'Limite F1c/B1c', 'pen.f2b2.label':'Limite F2/B2', 'pen.f3b3.label':'Limite F3/B3',
+      'maxsets.label':'Número máximo de conjuntos a testar',
+      'pen.help':'As penalidades servem apenas para ranquear os conjuntos de primers. Nenhum conjunto é reprovado por penalidade: os limites são referência de pontuação.',
+      'geo.h2':'Geometria dos alvos',
+      'geo.f2b2.label':'Amplicon F2–B2 (5′F2→5′B2)',
+      'geo.opt.120180':'120–180 bp', 'geo.opt.120160':'120–160 bp (PrimerExplorer/NEB)', 'geo.opt.120200':'120–200 bp',
+      'geo.f3f2.label':'Gap F3–F2 (3′F3→5′F2)',
+      'geo.opt.060':'0–60 bp', 'geo.opt.020':'0–20 bp (Eiken loopamp)', 'geo.opt.040':'0–40 bp',
+      'geo.f1b1.label':'Distância F1–B1', 'geo.f2f1.label':'Distância F2–F1', 'geo.b2b1.label':'Distância B2–B1',
+      'geo.help':'Geometria conforme o padrão Eiken PrimerExplorer V5 / NEB: <b>amplicon F2–B2 (5′F2→5′B2) = 120–180 bp</b> (região amplificada); <b>gap F3–F2 (3′F3→5′F2) = 0–60 bp</b>; loops F2–F1 e B2–B1 = 40–60 bp; centro F1–B1 = 0–60 bp.',
+      'btn.restore':'Restaurar padrão', 'btn.apply':'Aplicar parâmetros',
+      'img.caption':'Esquema ilustrativo da disposição dos primers no método LAMP.',
+      'res.h2':'Resultados',
+      'res.empty':'Ainda não há resultados. Gere primers para visualizá-los aqui.',
+      'footer.html':'<strong>LAMPrime</strong> — desenho de primers LAMP no navegador (Tm nearest-neighbor SantaLucia 1998; geometria PrimerExplorer V5/NEB). Código aberto (MIT): <a href="https://github.com/luizdione/LAMPrime" target="_blank" rel="noopener" style="color:var(--accent);">github.com/luizdione/LAMPrime</a>.',
+      'footer.lab':'Laboratório de Genética Molecular — IFRJ. De-Melo, Luiz Dione Barbosa — Copyright 2025–2026.',
+      // dinâmicas
+      'btn.applying':'Aplicado!', 'btn.generating':'Gerando...',
+      'alert.lc':'Informe um valor de LC% entre 70 e 90.',
+      'alert.shortSeq':'Sequência curta. Insira ao menos ~150–250 nt para um design LAMP confiável.',
+      'alert.noSets':'Nenhum conjunto LAMP satisfez as restrições (Tm/distâncias). Tente uma sequência mais longa (~200–300 nt), alargue as faixas de Tm ou o GC.',
+      'alert.designErr':'Erro no desenho: ',
+      'res.summary':'Resumo do desenho', 'res.target':'Alvo', 'res.sets':'Conjuntos',
+      'res.targetTm':'Tm alvo', 'res.salts':'Sais',
+      'res.method':'Tm por nearest-neighbor (SantaLucia 1998) com correção de sal + equivalente de Mg²⁺ (von Ahsen 2001). A penalidade apenas ranqueia; avisos não reprovam o conjunto.',
+      'res.outer':'Primers externos',
+      'res.inner':'Primers internos  (FIP = F1c–loop–F2 · BIP = B1c–loop–B2)',
+      'res.loopHdr':'Loop primers (aceleram a reação)',
+      'res.positions':'Posições (1-based)', 'res.distances':'Distâncias',
+      'res.struct':'Estrutura 2ª (@63 °C)', 'res.worstHp':'pior hairpin ΔG', 'res.worstDi':'pior dímero ΔG',
+      'res.allOk':'✓ todos os primers dentro das faixas de Tm/GC/LC', 'res.copy':'copiar',
+      'res.set':'Conjunto', 'res.penalty':'penalidade', 'res.amplicon':'amplicon',
+      'warn.hairpin':'hairpin', 'warn.selfdimer':'self-dímero', 'warn.dimer':'dímero',
+      'notes.geometry': g => `Geometria (padrão Eiken/NEB): amplicon F2–B2 ${g.f2b2[0]}–${g.f2b2[1]} nt · gap F3–F2 ${g.gap[0]}–${g.gap[1]} nt · loop F2–F1 ${g.loopF2F1[0]}–${g.loopF2F1[1]} nt · centro F1–B1 ${g.f1b1[0]}–${g.f1b1[1]} nt.`,
+      'res.setsOf': n => `(de ${n} candidatos válidos)`,
+    },
+    en: {
+      'tab.input':'Input', 'tab.params':'Parameters', 'tab.results':'Results',
+      'seq.h2':'Target sequence',
+      'seq.help':'Paste the sequence (A, T, G, C) or provide an identifier (e.g., GenBank).',
+      'id.label':'Identifier (optional)', 'id.ph':'e.g., NC_045512, MN908947, etc.',
+      'seq.label':'Sequence', 'seq.ph':'Paste the DNA sequence here...',
+      'btn.fasta':'Load FASTA', 'btn.clear':'Clear', 'btn.run':'Generate primers',
+      'refs.h3':'References and Publications',
+      'refs.lead':'Key references implemented in the LAMPrime algorithm:',
+      'refs.tools':'Primer geometry rules: Eiken PrimerExplorer V5 (https://primerexplorer.jp/) and New England Biolabs — LAMP Primer Design (https://lamp.neb.com/).',
+      'refs.github':'Open source (MIT): <a href="https://github.com/luizdione/LAMPrime" target="_blank" rel="noopener" style="color:var(--accent);">github.com/luizdione/LAMPrime</a>',
+      'params.basic.h2':'Basic settings',
+      'tm.inner.label':'Target Tm (F1c/B1c/LF/LB)', 'tm.outer.label':'Target Tm (F2/B2/F3/B3)',
+      'size.f3b3.label':'Primer size (F3/B3)', 'size.lflb.label':'Primer size (LF/LB)',
+      'loopseq.label':'Inner loop linker (FIP/BIP) — 5´TTTTTT 3´',
+      'fip.label':'Total FIP length (F1c-loop-F2)', 'bip.label':'Total BIP length (B1c-loop-B2)',
+      'gc.label':'Expected GC',
+      'gc.opt.4060':'40–60%', 'gc.opt.4065':'40–65% (Eiken canonical ceiling)', 'gc.opt.5060':'50–60% (optimal)',
+      'gc.opt.3565':'35–65%', 'gc.opt.4555':'45–55%',
+      'loops.label':'Loop primers',
+      'loops.opt.auto':'Automatic', 'loops.opt.on':'Force inclusion', 'loops.opt.off':'Do not include',
+      'lc.label':'Minimum linguistic complexity (LC%)',
+      'lc.help':'Linguistic complexity (LC%) measures the “vocabulary richness” of a genetic sequence, from the number of distinct nucleotide combinations (k-mers) observed relative to the theoretical maximum, expressed as a percentage (100% = maximum). Allowed range: 70–90%. Default: 75%.',
+      'react.h2':'Reaction conditions',
+      'pen.h2':'Penalties and ranking',
+      'pen.f1cb1c.label':'F1c/B1c limit', 'pen.f2b2.label':'F2/B2 limit', 'pen.f3b3.label':'F3/B3 limit',
+      'maxsets.label':'Maximum number of sets to test',
+      'pen.help':'Penalties are used only to rank primer sets. No set is rejected by penalty: the limits are scoring references.',
+      'geo.h2':'Target geometry',
+      'geo.f2b2.label':'Amplicon F2–B2 (5′F2→5′B2)',
+      'geo.opt.120180':'120–180 bp', 'geo.opt.120160':'120–160 bp (PrimerExplorer/NEB)', 'geo.opt.120200':'120–200 bp',
+      'geo.f3f2.label':'Gap F3–F2 (3′F3→5′F2)',
+      'geo.opt.060':'0–60 bp', 'geo.opt.020':'0–20 bp (Eiken loopamp)', 'geo.opt.040':'0–40 bp',
+      'geo.f1b1.label':'F1–B1 distance', 'geo.f2f1.label':'F2–F1 distance', 'geo.b2b1.label':'B2–B1 distance',
+      'geo.help':'Geometry per the Eiken PrimerExplorer V5 / NEB standard: <b>F2–B2 amplicon (5′F2→5′B2) = 120–180 bp</b> (amplified region); <b>F3–F2 gap (3′F3→5′F2) = 0–60 bp</b>; F2–F1 and B2–B1 loops = 40–60 bp; F1–B1 center = 0–60 bp.',
+      'btn.restore':'Restore defaults', 'btn.apply':'Apply parameters',
+      'img.caption':'Schematic of primer arrangement in the LAMP method.',
+      'res.h2':'Results',
+      'res.empty':'No results yet. Generate primers to see them here.',
+      'footer.html':'<strong>LAMPrime</strong> — LAMP primer design in the browser (nearest-neighbor Tm, SantaLucia 1998; PrimerExplorer V5/NEB geometry). Open source (MIT): <a href="https://github.com/luizdione/LAMPrime" target="_blank" rel="noopener" style="color:var(--accent);">github.com/luizdione/LAMPrime</a>.',
+      'footer.lab':'Molecular Genetics Laboratory — IFRJ. De-Melo, Luiz Dione Barbosa — Copyright 2025–2026.',
+      // dynamic
+      'btn.applying':'Applied!', 'btn.generating':'Generating...',
+      'alert.lc':'Enter an LC% value between 70 and 90.',
+      'alert.shortSeq':'Sequence too short. Provide at least ~150–250 nt for a reliable LAMP design.',
+      'alert.noSets':'No LAMP set satisfied the constraints (Tm/distances). Try a longer sequence (~200–300 nt), or widen the Tm or GC ranges.',
+      'alert.designErr':'Design error: ',
+      'res.summary':'Design summary', 'res.target':'Target', 'res.sets':'Sets',
+      'res.targetTm':'Target Tm', 'res.salts':'Salts',
+      'res.method':'Tm by nearest-neighbor (SantaLucia 1998) with salt correction + Mg²⁺ equivalent (von Ahsen 2001). The penalty only ranks; warnings do not reject the set.',
+      'res.outer':'Outer primers',
+      'res.inner':'Inner primers  (FIP = F1c–loop–F2 · BIP = B1c–loop–B2)',
+      'res.loopHdr':'Loop primers (accelerate the reaction)',
+      'res.positions':'Positions (1-based)', 'res.distances':'Distances',
+      'res.struct':'Secondary structure (@63 °C)', 'res.worstHp':'worst hairpin ΔG', 'res.worstDi':'worst dimer ΔG',
+      'res.allOk':'✓ all primers within Tm/GC/LC ranges', 'res.copy':'copy',
+      'res.set':'Set', 'res.penalty':'penalty', 'res.amplicon':'amplicon',
+      'warn.hairpin':'hairpin', 'warn.selfdimer':'self-dimer', 'warn.dimer':'dimer',
+      'notes.geometry': g => `Geometry (Eiken/NEB standard): F2–B2 amplicon ${g.f2b2[0]}–${g.f2b2[1]} nt · F3–F2 gap ${g.gap[0]}–${g.gap[1]} nt · F2–F1 loop ${g.loopF2F1[0]}–${g.loopF2F1[1]} nt · F1–B1 center ${g.f1b1[0]}–${g.f1b1[1]} nt.`,
+      'res.setsOf': n => `(of ${n} valid candidates)`,
+    }
+  };
+  let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); return m?m[1].toLowerCase():'pt'; })();
+  const L = () => I18N[LANG] || I18N.pt;
 
   // Tabs
   const tabs = qsa('.lw-tab');
@@ -129,20 +262,21 @@
     // Validação simples do LC%
     const v = parseFloat(els.lcMin.value);
     if (isNaN(v) || v < 70 || v > 90) {
-      alert('Informe um valor de LC% entre 70 e 90.');
+      alert(L()['alert.lc']);
       els.lcMin.focus();
       return;
     }
     // Feedback simples
-    btnAplicar.textContent = 'Aplicado!';
-    setTimeout(() => btnAplicar.textContent = 'Aplicar parâmetros', 1000);
+    btnAplicar.textContent = L()['btn.applying'];
+    setTimeout(() => btnAplicar.textContent = L()['btn.apply'], 1000);
   });
 
   restoreDefaults();
 
-  // Resultados (mock)
+  // Resultados
   const resEmpty = qs('#res-vazio');
   const resList = qs('#res-list');
+  let lastData = null; // último resultado renderizado (para re-render ao trocar idioma)
 
   function toTabResultados() {
     const tabRes = qs('#tabbtn-res');
@@ -209,8 +343,7 @@
 
   // ===== Estruturas secundárias: hairpin, homodímero, heterodímero =====
   // ΔG (kcal/mol) na TEMPERATURA DE REAÇÃO (~63 °C): só estruturas estáveis nessa
-  // faixa (60–65 °C) atrapalham a LAMP. Modelo NN SantaLucia 1998. (Como o
-  // LAMPrimers iQ, que exclui homo/heterodímeros — porém aqui de forma transparente.)
+  // faixa (60–65 °C) atrapalham a LAMP. Modelo NN SantaLucia 1998.
   const TREACT_K = 63 + 273.15;
   function segDG(seg) { // ΔG de um duplexo perfeitamente pareado de `seg`
     seg = (seg||'').toUpperCase(); const N = seg.length; if (N < 2) return 0;
@@ -250,19 +383,20 @@
     }
     return best;
   }
-  // varre estruturas dos 6 primers do conjunto: hairpins, self e cross-dímeros
+  // varre estruturas dos primers do conjunto: hairpins, self e cross-dímeros.
+  // Avisos retornados como tokens estruturados (traduzidos no render).
   const STRUCT_TH = -3.0; // ΔG limiar (kcal/mol @63°C): mais negativo = problemático
   function structureScan(primers) {
     let pen=0; const warns=[]; let worstHp=0, worstDi=0;
     for (const p of primers){
       const hp=hairpinDG(p.seq); if (hp<worstHp) worstHp=hp;
-      if (hp<STRUCT_TH){ pen += (STRUCT_TH-hp); warns.push(`${p.name} hairpin ΔG ${hp.toFixed(1)}`); }
+      if (hp<STRUCT_TH){ pen += (STRUCT_TH-hp); warns.push({t:'hairpin', n:p.name, v:hp.toFixed(1)}); }
       const sd=dimerDG(p.seq, p.seq); if (sd<worstDi) worstDi=sd;
-      if (sd<STRUCT_TH){ pen += (STRUCT_TH-sd); warns.push(`${p.name} self-dímero ΔG ${sd.toFixed(1)}`); }
+      if (sd<STRUCT_TH){ pen += (STRUCT_TH-sd); warns.push({t:'selfdimer', n:p.name, v:sd.toFixed(1)}); }
     }
     for (let a=0;a<primers.length;a++) for (let b=a+1;b<primers.length;b++){
       const cd=dimerDG(primers[a].seq, primers[b].seq); if (cd<worstDi) worstDi=cd;
-      if (cd<STRUCT_TH){ pen += (STRUCT_TH-cd)*0.8; warns.push(`${primers[a].name}/${primers[b].name} dímero ΔG ${cd.toFixed(1)}`); }
+      if (cd<STRUCT_TH){ pen += (STRUCT_TH-cd)*0.8; warns.push({t:'dimer', n:`${primers[a].name}/${primers[b].name}`, v:cd.toFixed(1)}); }
     }
     return { penalty: pen*3, warns, worstHairpin: worstHp, worstDimer: worstDi };
   }
@@ -320,9 +454,9 @@
 
   function designLAMP(S, P) {
     const N=S.length;
-    if (N<120) return {error:'Sequência curta. Insira ao menos ~150–250 nt para um design LAMP confiável.'};
+    if (N<120) return {errorKey:'alert.shortSeq'};
     const innerLenMin=18, innerLenMax=26;
-    const notes=[`Geometria (padrão Eiken/NEB): amplicon F2–B2 ${P.d_F2B2[0]}–${P.d_F2B2[1]} nt · gap F3–F2 ${P.gapF3F2[0]}–${P.gapF3F2[1]} nt · loop F2–F1 ${P.d_F2F1[0]}–${P.d_F2F1[1]} nt · centro F1–B1 ${P.d_F1B1[0]}–${P.d_F1B1[1]} nt.`];
+    const geom={ f2b2:P.d_F2B2, gap:P.gapF3F2, loopF2F1:P.d_F2F1, f1b1:P.d_F1B1 };
 
     const blockDev = b => (b.F1?b.F1.dev:b.B1.dev)+(b.F2?b.F2.dev:b.B2.dev)+(b.F3?b.F3.dev:b.B3.dev);
 
@@ -400,15 +534,15 @@
         const segs=[['F3',F.F3],['F2',F.F2],['F1c',F.F1],['B1c',B.B1],['B2',B.B2],['B3',B.B3]];
         let gcPen=0,lcPen=0,warns=[];
         for (const [name,info] of segs){
-          if (!inRange(info.gc,P.gcLo,P.gcHi)){ gcPen+=1; warns.push(`${name} GC ${info.gc.toFixed(0)}%`); }
-          if (info.lc<P.lcMin){ lcPen+=1; warns.push(`${name} LC ${info.lc.toFixed(0)}%`); }
+          if (!inRange(info.gc,P.gcLo,P.gcHi)){ gcPen+=1; warns.push({t:'gc', n:name, v:info.gc.toFixed(0)}); }
+          if (info.lc<P.lcMin){ lcPen+=1; warns.push({t:'lc', n:name, v:info.lc.toFixed(0)}); }
         }
         const fipOk=inRange(FIP.length,P.fipMin,P.fipMax), bipOk=inRange(BIP.length,P.bipMin,P.bipMax);
-        if (!fipOk) warns.push(`FIP ${FIP.length} nt`); if (!bipOk) warns.push(`BIP ${BIP.length} nt`);
+        if (!fipOk) warns.push({t:'len', n:'FIP', v:FIP.length}); if (!bipOk) warns.push({t:'len', n:'BIP', v:BIP.length});
         // estabilidade das extremidades de iniciação (Eiken: ΔG ≤ -4 kcal/mol)
         let dgPen=0;
-        [['F3',F3,'3'],['F2',F2,'3'],['B3',B3,'3'],['B2',B2,'3']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>-4){dgPen++; warns.push(`${n} 3'ΔG ${g.toFixed(1)}`);} });
-        [['F1c',F1c,'5'],['B1c',B1c,'5']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>-4){dgPen++; warns.push(`${n} 5'ΔG ${g.toFixed(1)}`);} });
+        [['F3',F3,'3'],['F2',F2,'3'],['B3',B3,'3'],['B2',B2,'3']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>-4){dgPen++; warns.push({t:'dg', n, end:e, v:g.toFixed(1)});} });
+        [['F1c',F1c,'5'],['B1c',B1c,'5']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>-4){dgPen++; warns.push({t:'dg', n, end:e, v:g.toFixed(1)});} });
         const penalty=(pInner+pF2B2+pF3B3)*100 + gcPen*5 + lcPen*5 + dgPen*4 + (fipOk?0:8) + (bipOk?0:8);
 
         sets.push({
@@ -439,57 +573,75 @@
     }
     uniq.sort((a,b)=>a.penalty-b.penalty);
     uniq.forEach((s,i)=>s.rank=i+1);
-    return { sets:uniq, totalCandidates:sets.length, notes, params:P, targetLen:N, gc:Math.round(gcPct(S)) };
+    return { sets:uniq, totalCandidates:sets.length, geom, params:P, targetLen:N, gc:Math.round(gcPct(S)) };
+  }
+
+  // formata um aviso estruturado no idioma atual
+  function fmtWarn(w) {
+    const D=L();
+    switch (w.t) {
+      case 'gc':  return `${w.n} GC ${w.v}%`;
+      case 'lc':  return `${w.n} LC ${w.v}%`;
+      case 'len': return `${w.n} ${w.v} nt`;
+      case 'dg':  return `${w.n} ${w.end}'ΔG ${w.v}`;
+      case 'hairpin':   return `${w.n} ${D['warn.hairpin']} ΔG ${w.v}`;
+      case 'selfdimer': return `${w.n} ${D['warn.selfdimer']} ΔG ${w.v}`;
+      case 'dimer':     return `${w.n} ${D['warn.dimer']} ΔG ${w.v}`;
+      default: return '';
+    }
   }
 
   function renderResults(data) {
+    lastData = data;
     resList.innerHTML = '';
     if (!data || !data.sets || data.sets.length === 0) {
       resEmpty.hidden = false; resList.hidden = true; return;
     }
     resEmpty.hidden = true; resList.hidden = false;
 
+    const D = L();
     const P = data.params || {};
+    const note = data.geom ? D['notes.geometry'](data.geom) : '';
     const header = document.createElement('div');
     header.className = 'lw-result-card';
     header.innerHTML = `
-      <h4>Resumo do desenho</h4>
-      <div class="lw-kv"><div>Alvo</div><div>${data.targetLen} nt · GC ${data.gc}%</div></div>
-      <div class="lw-kv"><div>Conjuntos</div><div>${data.sets.length} (de ${data.totalCandidates} candidatos válidos)</div></div>
-      <div class="lw-kv"><div>Tm alvo</div><div>F1c/B1c ${P.innerLo}–${P.innerHi} °C · F2/B2/F3/B3 ${P.outerLo}–${P.outerHi} °C</div></div>
-      <div class="lw-kv"><div>Sais</div><div>Na⁺ ${P.na} mM · Mg²⁺ ${P.mg} mM · dNTP ${P.dntp} mM</div></div>
-      <p class="lw-help">${(data.notes||[]).join(' ')}</p>
-      <p class="lw-help">Tm por nearest-neighbor (SantaLucia 1998) com correção de sal + equivalente de Mg²⁺ (von Ahsen 2001). A penalidade apenas ranqueia; avisos não reprovam o conjunto.</p>
+      <h4>${D['res.summary']}</h4>
+      <div class="lw-kv"><div>${D['res.target']}</div><div>${data.targetLen} nt · GC ${data.gc}%</div></div>
+      <div class="lw-kv"><div>${D['res.sets']}</div><div>${data.sets.length} ${D['res.setsOf'](data.totalCandidates)}</div></div>
+      <div class="lw-kv"><div>${D['res.targetTm']}</div><div>F1c/B1c ${P.innerLo}–${P.innerHi} °C · F2/B2/F3/B3 ${P.outerLo}–${P.outerHi} °C</div></div>
+      <div class="lw-kv"><div>${D['res.salts']}</div><div>Na⁺ ${P.na} mM · Mg²⁺ ${P.mg} mM · dNTP ${P.dntp} mM</div></div>
+      <p class="lw-help">${note}</p>
+      <p class="lw-help">${D['res.method']}</p>
     `;
     resList.appendChild(header);
 
-    const copyBtn = (seq) => `<button class="lw-btn ghost lw-copy" data-seq="${seq}" title="Copiar" style="padding:2px 8px; font-size:11px;">copiar</button>`;
+    const copyBtn = (seq) => `<button class="lw-btn ghost lw-copy" data-seq="${seq}" title="${D['res.copy']}" style="padding:2px 8px; font-size:11px;">${D['res.copy']}</button>`;
     const row = (label, p) => p ? `<div class="lw-kv"><div>${label}</div><div>5'-${p.seq}-3' <span class="lw-suffix">(${p.len||p.seq.length} nt${p.tm!=null?`, Tm ${p.tm.toFixed(1)}°C`:''}${p.gc!=null?`, GC ${p.gc.toFixed(0)}%`:''})</span> ${copyBtn(p.seq)}</div></div>` : '';
 
     data.sets.forEach(set => {
       const card = document.createElement('div');
       card.className = 'lw-result-card';
       const warn = (set.warns&&set.warns.length)
-        ? `<p class="lw-help" style="color:var(--warn);">⚠ ${set.warns.join(' · ')}</p>`
-        : `<p class="lw-help" style="color:var(--ok);">✓ todos os primers dentro das faixas de Tm/GC/LC</p>`;
+        ? `<p class="lw-help" style="color:var(--warn);">⚠ ${set.warns.map(fmtWarn).join(' · ')}</p>`
+        : `<p class="lw-help" style="color:var(--ok);">${D['res.allOk']}</p>`;
       card.innerHTML = `
-        <h4>Conjunto #${set.rank} — penalidade ${set.penalty.toFixed(1)} · amplicon F3–B3 ${set.ampliconF3B3} nt</h4>
-        <div class="lw-help" style="margin:0 0 4px;">Primers externos</div>
+        <h4>${D['res.set']} #${set.rank} — ${D['res.penalty']} ${set.penalty.toFixed(1)} · ${D['res.amplicon']} F3–B3 ${set.ampliconF3B3} nt</h4>
+        <div class="lw-help" style="margin:0 0 4px;">${D['res.outer']}</div>
         ${row('F3', set.F3)}
         ${row('B3', set.B3)}
-        <div class="lw-help" style="margin:8px 0 4px;">Primers internos &nbsp;(FIP = F1c–loop–F2 · BIP = B1c–loop–B2)</div>
+        <div class="lw-help" style="margin:8px 0 4px;">${D['res.inner']}</div>
         ${row('FIP', set.FIP)}
         ${row('↳ F1c', set.F1c)}
         ${row('↳ F2', set.F2)}
         ${row('BIP', set.BIP)}
         ${row('↳ B1c', set.B1c)}
         ${row('↳ B2', set.B2)}
-        ${(set.LF||set.LB)?`<div class="lw-help" style="margin:8px 0 4px;">Loop primers (aceleram a reação)</div>`:''}
+        ${(set.LF||set.LB)?`<div class="lw-help" style="margin:8px 0 4px;">${D['res.loopHdr']}</div>`:''}
         ${row('LF', set.LF)}
         ${row('LB', set.LB)}
-        <div class="lw-kv"><div>Posições (1-based)</div><div>F3 ${set.coords.F3.join('–')} · F2 ${set.coords.F2.join('–')} · F1 ${set.coords.F1.join('–')} · B1 ${set.coords.B1.join('–')} · B2 ${set.coords.B2.join('–')} · B3 ${set.coords.B3.join('–')}</div></div>
-        <div class="lw-kv"><div>Distâncias</div><div>F2–B2 ${set.ampliconF2B2} nt · F1–B1 ${set.dF1B1} nt</div></div>
-        ${set.struct ? `<div class="lw-kv"><div>Estrutura 2ª (@63°C)</div><div>pior hairpin ΔG ${set.struct.hairpin.toFixed(1)} · pior dímero ΔG ${set.struct.dimer.toFixed(1)} kcal/mol</div></div>` : ''}
+        <div class="lw-kv"><div>${D['res.positions']}</div><div>F3 ${set.coords.F3.join('–')} · F2 ${set.coords.F2.join('–')} · F1 ${set.coords.F1.join('–')} · B1 ${set.coords.B1.join('–')} · B2 ${set.coords.B2.join('–')} · B3 ${set.coords.B3.join('–')}</div></div>
+        <div class="lw-kv"><div>${D['res.distances']}</div><div>F2–B2 ${set.ampliconF2B2} nt · F1–B1 ${set.dF1B1} nt</div></div>
+        ${set.struct ? `<div class="lw-kv"><div>${D['res.struct']}</div><div>${D['res.worstHp']} ${set.struct.hairpin.toFixed(1)} · ${D['res.worstDi']} ${set.struct.dimer.toFixed(1)} kcal/mol</div></div>` : ''}
         ${warn}
       `;
       resList.appendChild(card);
@@ -502,29 +654,59 @@
 
   btnExecutar.addEventListener('click', () => {
     const seq = sanitizeDNA(seqEl.value.trim());
-    const execBtnText = btnExecutar.textContent;
-    btnExecutar.textContent = 'Gerando...';
+    btnExecutar.textContent = L()['btn.generating'];
     btnExecutar.disabled = true;
     setTimeout(() => {
       try {
         const data = designLAMP(seq, readParams());
-        if (data.error) {
-          alert(data.error);
+        if (data.errorKey) {
+          alert(L()[data.errorKey]);
           renderResults({ sets: [] });
         } else if (!data.sets.length) {
-          alert('Nenhum conjunto LAMP satisfez as restrições (Tm/distâncias). Tente uma sequência mais longa (~200–300 nt), alargue as faixas de Tm ou o GC.');
+          alert(L()['alert.noSets']);
           renderResults({ sets: [] });
         } else {
           renderResults(data);
           toTabResultados();
         }
       } catch (err) {
-        console.error('Erro no desenho LAMP:', err);
-        alert('Erro no desenho: ' + (err && err.message ? err.message : err));
+        console.error('LAMP design error:', err);
+        alert(L()['alert.designErr'] + (err && err.message ? err.message : err));
       } finally {
-        btnExecutar.textContent = execBtnText;
+        btnExecutar.textContent = L()['btn.run'];
         btnExecutar.disabled = false;
       }
     }, 30);
   });
+
+  // ===================================================================
+  // i18n — aplicação no DOM + botão de idioma
+  // ===================================================================
+  function applyLang(lang) {
+    LANG = (lang === 'en') ? 'en' : 'pt';
+    const D = L();
+    qsa('[data-i18n]').forEach(el => { const k=el.getAttribute('data-i18n'); if (typeof D[k]==='string') el.textContent = D[k]; });
+    qsa('[data-i18n-html]').forEach(el => { const k=el.getAttribute('data-i18n-html'); if (typeof D[k]==='string') el.innerHTML = D[k]; });
+    qsa('[data-i18n-ph]').forEach(el => { const k=el.getAttribute('data-i18n-ph'); if (typeof D[k]==='string') el.setAttribute('placeholder', D[k]); });
+    const tg = qs('#langToggle');
+    if (tg) { tg.textContent = (LANG==='en') ? 'Versão em Português' : 'English Version'; tg.title = tg.textContent; }
+    document.documentElement.lang = (LANG==='en') ? 'en' : 'pt-BR';
+    // botões com estado padrão acompanham o idioma
+    if (btnExecutar && !btnExecutar.disabled) btnExecutar.textContent = D['btn.run'];
+    if (btnAplicar) btnAplicar.textContent = D['btn.apply'];
+    // re-renderiza resultados em cache no novo idioma
+    if (lastData) renderResults(lastData);
+  }
+
+  const btnLang = qs('#langToggle');
+  if (btnLang) {
+    btnLang.addEventListener('click', () => {
+      const next = (LANG === 'en') ? 'pt' : 'en';
+      const params = new URLSearchParams(location.search);
+      params.set('lang', next);
+      history.replaceState(null, '', location.pathname + '?' + params.toString());
+      applyLang(next);
+    });
+  }
+  applyLang(LANG);
 })();
