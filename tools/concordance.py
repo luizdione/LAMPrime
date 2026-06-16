@@ -1,0 +1,165 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+concordance.py - Concordancia LAMPrime vs primers LAMP PUBLICADOS.
+Para cada patogeno: localiza cada primer publicado na sequencia-alvo e calcula
+Tm (modelo NN identico ao LAMPrime: SantaLucia 1998 + von Ahsen Mg->Na) + GC + posicao.
+Reprodutivel. Saida: concordancia geometrica e termodinamica com ensaios LAMP publicados.
+"""
+import sys, math, urllib.request
+sys.stdout.reconfigure(encoding='utf-8')
+
+NN_DH={'AA':-7.9,'AT':-7.2,'TA':-7.2,'CA':-8.5,'GT':-8.4,'CT':-7.8,'GA':-8.2,'CG':-10.6,'GC':-9.8,'GG':-8.0,'AC':-8.4,'AG':-7.8,'TC':-8.2,'TG':-8.5,'TT':-7.9,'CC':-8.0}
+NN_DS={'AA':-22.2,'AT':-20.4,'TA':-21.3,'CA':-22.7,'GT':-22.4,'CT':-21.0,'GA':-22.2,'CG':-27.2,'GC':-24.4,'GG':-19.9,'AC':-22.4,'AG':-21.0,'TC':-22.2,'TG':-22.7,'TT':-22.2,'CC':-19.9}
+R=1.987; NA=50.0; MG=8.0; DNTP=1.4; OLIGO=50e-9
+def comp(b): return {'A':'T','T':'A','G':'C','C':'G','N':'N'}.get(b,'N')
+def rc(s): return ''.join(comp(c) for c in reversed(s))
+def gc(s): 
+    s=s.upper(); n=len(s) or 1; return 100.0*sum(c in 'GC' for c in s)/n
+def tm(seq):
+    seq=''.join(c for c in seq.upper() if c in 'ATGC'); N=len(seq)
+    if N<2: return float('nan')
+    dH=dS=0.0
+    for i in range(N-1):
+        d=seq[i:i+2]
+        if d not in NN_DH: return float('nan')
+        dH+=NN_DH[d]; dS+=NN_DS[d]
+    for b in (seq[0],seq[-1]):
+        h,s=(0.1,-2.8) if b in 'GC' else (2.3,4.1); dH+=h; dS+=s
+    mgf=max(0.0,MG-DNTP); naeq=max(1e-3,(NA+120*math.sqrt(mgf)))/1000.0
+    dS_salt=dS+0.368*(N-1)*math.log(naeq)
+    return (dH*1000)/(dS_salt+R*math.log(OLIGO/4))-273.15
+
+def find(target, primer):
+    """retorna (start1based, end1based, fita) localizando primer (sense ou via revcomp)."""
+    p=primer.upper()
+    i=target.find(p)
+    if i!=-1: return (i+1, i+len(p), '+')
+    j=target.find(rc(p))
+    if j!=-1: return (j+1, j+len(p), '-')
+    return None
+
+def split_fip(target, fip):
+    """FIP=F1c+F2: F2 = maior sufixo 3' que é substring sense do alvo."""
+    for L in range(min(28,len(fip)-10), 14, -1):
+        f2=fip[-L:]
+        if target.find(f2)!=-1:
+            return fip[:-L], f2
+    return None, fip
+def split_bip(target, bip):
+    """BIP=B1c+B2: B1c = maior prefixo 5' que é substring sense do alvo."""
+    for L in range(min(28,len(bip)-10), 14, -1):
+        b1c=bip[:L]
+        if target.find(b1c)!=-1:
+            return b1c, bip[L:]
+    return bip, ''
+
+def report(name, target, P):
+    print(f"\n===== {name}  (alvo {len(target)} nt) =====")
+    f1c,f2=split_fip(target, P['FIP']); b1c,b2=split_bip(target, P['BIP'])
+    comps=[('F3',P['F3']),('F2',f2),('F1c',f1c),('B1c',b1c),('B2',b2),('B3',P['B3'])]
+    if P.get('LF'): comps.append(('LF',P['LF']))
+    if P.get('LB'): comps.append(('LB',P['LB']))
+    print(f"{'prim':5} {'len':>3} {'Tm':>6} {'GC':>5}  pos(fita)        seq")
+    locs={}
+    for nm,seq in comps:
+        if not seq: continue
+        loc=find(target,seq); locs[nm]=loc
+        ps=f"{loc[0]}-{loc[1]}({loc[2]})" if loc else "NAO ACHADO"
+        print(f"{nm:5} {len(seq):>3} {tm(seq):6.1f} {gc(seq):5.0f}  {ps:16} {seq}")
+    # amplicons
+    if locs.get('F2') and locs.get('B2'):
+        a=min(locs['F2'][0],locs['B2'][0]); b=max(locs['F2'][1],locs['B2'][1])
+        print(f"  amplicon F2-B2 = {b-a+1} nt")
+    if locs.get('F3') and locs.get('B3'):
+        a=min(locs['F3'][0],locs['B3'][0]); b=max(locs['F3'][1],locs['B3'][1])
+        print(f"  amplicon F3-B3 = {b-a+1} nt")
+
+# ---- alvos ----
+msp5='ATGAGAATTTTCAAGATTGTGTCTAACCTGCTGCTGCTCGTTGCTGCCGTGTTCCTAGGATACTCTTATGTGAACAAGAAGGGCATTTTCAGCAAAATCGGCGAGAGGTTCACCACCTCCGAAGTTGCGAGCGAGGGCATAGCCTCCGCATCTTTCAGCAATTTGATTAACCACGAGGGGGTCACCGTCAGTAGCGGCGATTTTGGCGGCAGGCATATGTTGGTGATATTCGGCTTTTCGGCCTGCAAGCGCACGTGTCCTGCTGAGTTAGGAATGGCTTCTCAACTCCTCAATAAGCTCGGCGACCATGCCGATAAGTTGCAAGTTGTGTTCATAACTGTTGATCCGAAGAACGACACTGTCGCAAAGTTACGGGAGTATCACAAGGCCTTCGACGCAAGAATTCAGATGCTCACAGGTGAGGAAGCGGACATAAAGAGCGCGGTCGAGAACTACAAGGTGTACGTGGGTGACAAAAAGGCAAGTGATGGTGACATCGATCACTCAACCTTCATGTACCTAATCAATGGGAAAGGCAAGTACGTTGGGCATTTCGCGCCAGATTTTAATGCGTCTGAGGGCCAAGGCGATGAGCTGTTTAAGTTTGTCAGCGGTCACATGCTTAATTCTTAG'
+
+amarginale={'F3':'ACCTTCTGCTGTTCGTTG','B3':'GAGAAGCCATGCCTAACTC',
+ 'FIP':'GTTGAAAGACGCGGAGGCTAAATCGGCGAGAGGTTTAC','BIP':'CCGTCAGTAGCGGCGATTTGTACTTACAGGCTGAGAAGC',
+ 'LF':'TGCCCTCACTTACAACTTCG','LB':'CGGCAAGCACATGTTGGTA'}
+
+# busca S gene SARS-CoV-2 (NC_045512.2 CDS 21563-25384)
+sgene=''
+try:
+    url='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_045512.2&rettype=fasta&retmode=text&seq_start=21563&seq_stop=25384'
+    raw=urllib.request.urlopen(url, timeout=30).read().decode()
+    sgene=''.join(l.strip() for l in raw.splitlines() if not l.startswith('>'))
+    sgene=''.join(c for c in sgene.upper() if c in 'ATGCN')
+    print('S gene baixado:', len(sgene), 'nt')
+except Exception as e:
+    print('FALHA fetch S gene:', e)
+
+sarscov2={'F3':'TGGTGATATTGCTGCTAGA','B3':'GCACTATTAAATTGGTGGGC',
+ 'FIP':'AGGTCCAACCAGAAGTGATTCACCTTTGCTCACAGATG','BIP':'GCAGGTGCTGCATTACAATCTGTGTAACTCCAATACCA',
+ 'LF':'GCTAACAGTGCAGAAGTGTATT','LB':'GCTATGCAAATGGCTTATAGGT'}
+
+# ---- A. marginale msp1b (Giglioti et al. 2018, Exp Appl Acarol) ----
+# Alvo = fragmento sintetico (gBlocks) de msp1b (M59845.1) IMPRESSO no paper (pag. 2);
+# primers = Tabela 1. Todos os 6 ocorrem nesta sequencia -> concordancia completa.
+msp1b=('GGTAAACTCAAGAGCTCAGATGCACCCAAGGACCTTGACCAGAGCATT'
+ 'GACGCACTACCGTTCATGGATGAAGCACCTGACACTGGTGAGAAGATTGAAGTA'
+ 'CCAGCGGGTGAGGAGCAAGAATTTGGCAAGGCAGCAGCTTGGGGTCTAGCA'
+ 'GGCTTCAAGCGTACAGTGGATGAAAGCCTGGAGATGTTAGACCGAGGCATG'
+ 'CACATGCTCGCGGAAGGCCAGGCACAGATATCACAGGGGATTGACGCCAAG'
+ 'GATACTGCACTAGTTAGGGAAGGTCTGGAAACATCTAGACTTGGTGCAGGGTTA'
+ 'TGTCGCAATGGCTTGGTAGAGGCCTCCTACGGCGTTGGTTA')
+amarginale_msp1b={'F3':'GCACTACCGTTCATGGATGA','B3':'TCCCCTGTGATATCTGTGCC',
+ 'FIP':'TGCCTTGCCAAATTCTTGCTCCCACCTGACACTGGTGAGAAG',
+ 'BIP':'AGCAGGCTTCAAGCGTACAGTTCCGCGAGCATGTGCA',
+ 'LF':'TCACCCGCTGGTACTTCAA','LB':'GCCTGGAGATGTTAGACCGA'}
+
+# ---- estruturas secundarias (hairpin/homo/heterodimero) @63C, modelo do LAMPrime ----
+TREACT=63+273.15
+def segdg(seg):
+    seg=seg.upper(); N=len(seg)
+    if N<2: return 0.0
+    dH=dS=0.0
+    for i in range(N-1):
+        d=seg[i:i+2]
+        if d in NN_DH: dH+=NN_DH[d]; dS+=NN_DS[d]
+    for b in (seg[0],seg[-1]):
+        h,s=(0.1,-2.8) if b in 'GC' else (2.3,4.1); dH+=h; dS+=s
+    return dH-TREACT*dS/1000.0
+def dimerdg(a,b):
+    a=a.upper(); B=b.upper()[::-1]; best=0.0
+    for off in range(-(len(a)-1), len(B)):
+        i=max(0,-off)
+        while i<len(a) and i+off<len(B):
+            if i+off>=0 and a[i]==comp(B[i+off]):
+                j=i; seg=''
+                while j<len(a) and 0<=j+off<len(B) and a[j]==comp(B[j+off]): seg+=a[j]; j+=1
+                if len(seg)>=3:
+                    dg=segdg(seg);  best=min(best,dg)
+                i=j
+            else: i+=1
+    return best
+def hairpindg(a):
+    a=a.upper(); best=0.0
+    for i in range(len(a)):
+        for j in range(len(a)-1, i+3, -1):
+            if a[i]!=comp(a[j]): continue
+            k=0; seg=''
+            while i+k<j-k and (j-k)-(i+k)-1>=3 and a[i+k]==comp(a[j-k]): seg+=a[i+k]; k+=1
+            if len(seg)>=3: best=min(best,segdg(seg))
+    return best
+def struct(name, P):
+    prims=[('F3',P['F3']),('B3',P['B3']),('FIP',P['FIP']),('BIP',P['BIP'])]
+    if P.get('LF'): prims.append(('LF',P['LF']))
+    if P.get('LB'): prims.append(('LB',P['LB']))
+    wh=min(hairpindg(s) for _,s in prims)
+    wsd=min(dimerdg(s,s) for _,s in prims)
+    wcd=0.0
+    for x in range(len(prims)):
+        for y in range(x+1,len(prims)):
+            wcd=min(wcd, dimerdg(prims[x][1], prims[y][1]))
+    print(f"  [estrutura @63C] pior hairpin ΔG {wh:.1f} | pior self-dimero {wsd:.1f} | pior hetero-dimero {wcd:.1f} kcal/mol (limiar -3.0)")
+
+report('A. marginale msp1b (Giglioti 2018, Exp Appl Acarol) - alvo gBlocks do paper', msp1b, amarginale_msp1b)
+struct('A. marginale msp1b', amarginale_msp1b)
+if sgene:
+    report('SARS-CoV-2 gene S (Prakash 2023, MethodsX)', sgene, sarscov2)
+    struct('SARS-CoV-2 gene S', sarscov2)

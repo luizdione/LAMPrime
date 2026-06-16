@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LAMPrime — LAMP Primer Designer (IFRJ)</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="lw-container" role="application" aria-label="Widget LAMP Designer">
+    <header class="lw-header">
+      <div class="lw-brand" style="justify-content: space-between; width:100%">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="lw-logo" aria-hidden="true">L</div>
+          <div class="lw-title">
+            <h1 id="appTitle">LAMPrime</h1>
+          </div>
+        </div>
+        <button id="langToggle" class="lw-btn" type="button" title="Switch to English">English Version</button>
+      </div>
+      <nav class="lw-tabs" role="tablist" aria-label="Seções do designer">
+        <button class="lw-tab is-active" role="tab" aria-selected="true" aria-controls="tab-entrada" id="tabbtn-entrada">Entrada</button>
+        <button class="lw-tab" role="tab" aria-selected="false" aria-controls="tab-param" id="tabbtn-param">Parâmetros</button>
+        <button class="lw-tab" role="tab" aria-selected="false" aria-controls="tab-res" id="tabbtn-res">Resultados</button>
+      </nav>
+    </header>
+
+    <main class="lw-main">
+      <!-- Entrada -->
+      <section class="lw-panel is-active" id="tab-entrada" role="tabpanel" aria-labelledby="tabbtn-entrada">
+        <div class="lw-card">
+          <h2>Sequência alvo</h2>
+          <p class="lw-help">Cole a sequência (A, T, G, C) ou informe um identificador (ex.: GenBank).</p>
+          <div class="lw-input-row">
+            <label for="alvo-id" class="lw-label">Identificador (opcional)</label>
+            <input id="alvo-id" type="text" class="lw-input" placeholder="Ex.: NC_045512, MN908947, etc.">
+          </div>
+          <div class="lw-input-row">
+            <label for="alvo-seq" class="lw-label">Sequência</label>
+            <textarea id="alvo-seq" class="lw-textarea" placeholder=": Cole aqui a sequência DNA..." spellcheck="false"></textarea>
+          </div>
+          <div class="lw-actions">
+            <label class="lw-file-btn">
+              <input id="file-fasta" type="file" accept=".fa,.fasta,.txt" hidden>
+              <span>Carregar FASTA</span>
+            </label>
+            <button id="btn-limpar" class="lw-btn ghost">Limpar</button>
+            <button id="btn-executar" class="lw-btn primary">Gerar primers</button>
+          </div>
+        </div>
+
+        <div class="lw-card lw-info">
+          <h3>Referências e Publicações</h3>
+          <p class="lw-help" style="text-align: justify;">Notomi T. et al. (2000). Loop-mediated isothermal amplification of DNA. Nucleic Acids Research, 28(12), e63.</p>
+          <p class="lw-help" style="text-align: justify;">Nagamine K. et al. (2002). Accelerated reaction by loop-mediated isothermal amplification using loop primers. Molecular and Cellular Probes, 16(3), 223-229.</p>
+          <p class="lw-help" style="text-align: justify;">Tomita N. et al. (2008). Loop-mediated isothermal amplification (LAMP) of gene sequences and simple visual detection of products. Nature Protocols, 3(5), 877-882.</p>
+          <p class="lw-help" style="text-align: justify;">Mori Y. et al. (2013). LAMP: A rapid nucleic acid amplification method. Microbiological Methods, 2nd ed.</p>
+          <p class="lw-help" style="text-align: justify;">Wang D.G. et al. (2015). A LAMP method for rapid detection of pathogenic bacteria. Journal of Microbiological Methods, 110, 45-53.</p>
+          <p class="lw-help" style="text-align: justify;">Becherer L. et al. (2020). Loop-mediated isothermal amplification (LAMP) – review and classification of methods for sequence-specific detection. Analytical Methods, 12(6), 717-746.</p>
+        </div>
+      </section>
+
+      <!-- Parâmetros -->
+      <section class="lw-panel" id="tab-param" role="tabpanel" aria-labelledby="tabbtn-param">
+        <div class="lw-grid">
+          <div class="lw-card">
+            <h2>Configurações básicas</h2>
+            <div class="lw-input-row">
+              <label class="lw-label">Tm alvo (F1c/B1c/LF/LB)</label>
+              <div class="lw-input" style="display:flex; gap:6px; background:transparent; border:none; padding:0;">
+                <input id="tm-f1c-b1c-lf-lb-min" type="number" class="lw-input" min="64" max="66" step="0.5" value="64" aria-label="Tm F1c/B1c/LF/LB mínimo">
+                <input id="tm-f1c-b1c-lf-lb-max" type="number" class="lw-input" min="64" max="66" step="0.5" value="66" aria-label="Tm F1c/B1c/LF/LB máximo">
+              </div>
+              <span class="lw-suffix">°C</span>
+            </div>
+            <div class="lw-input-row">
+              <label class="lw-label">Tm alvo (F2/B2/F3/B3)</label>
+              <div class="lw-input" style="display:flex; gap:6px; background:transparent; border:none; padding:0;">
+                <input id="tm-f2-b2-f3-b3-min" type="number" class="lw-input" min="59" max="61" step="0.5" value="59" aria-label="Tm F2/B2/F3/B3 mínimo">
+                <input id="tm-f2-b2-f3-b3-max" type="number" class="lw-input" min="59" max="61" step="0.5" value="61" aria-label="Tm F2/B2/F3/B3 máximo">
+              </div>
+              <span class="lw-suffix">°C</span>
+            </div>
+            <div class="lw-input-row">
+              <label class="lw-label">Tamanho Primers (F3/B3)</label>
+              <div class="lw-input" style="display:flex; gap:6px; background:transparent; border:none; padding:0;">
+                <input id="tam-f3-b3-min" type="number" class="lw-input" min="18" max="23" step="1" value="18" aria-label="Tamanho F3/B3 mínimo">
+                <input id="tam-f3-b3-max" type="number" class="lw-input" min="18" max="23" step="1" value="23" aria-label="Tamanho F3/B3 máximo">
+              </div>
+              <span class="lw-suffix">nt</span>
+            </div>
+            <div class="lw-input-row">
+              <label class="lw-label">Tamanho Primers (LF/LB)</label>
+              <div class="lw-input" style="display:flex; gap:6px; background:transparent; border:none; padding:0;">
+                <input id="tam-lf-lb-min" type="number" class="lw-input" min="18" max="23" step="1" value="18" aria-label="Tamanho LF/LB mínimo">
+                <input id="tam-lf-lb-max" type="number" class="lw-input" min="18" max="23" step="1" value="23" aria-label="Tamanho LF/LB máximo">
+              </div>
+              <span class="lw-suffix">nt</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="loop-seq" class="lw-label">Sequência do Loop Interno (FIP/BIP) — 5´TTTTTT 3´</label>
+              <input id="loop-seq" type="text" class="lw-input" value="TTTTTT" maxlength="12" placeholder="5´TTTTTT 3´">
+            </div>
+            <div class="lw-input-row">
+              <label class="lw-label">Tamanho total Primers FIP (F1c-loop-F2)</label>
+              <div class="lw-input" style="display:flex; gap:6px; background:transparent; border:none; padding:0;">
+                <input id="tam-fip-min" type="number" class="lw-input" min="42" max="52" step="1" value="42" aria-label="Tamanho FIP mínimo">
+                <input id="tam-fip-max" type="number" class="lw-input" min="42" max="52" step="1" value="52" aria-label="Tamanho FIP máximo">
+              </div>
+              <span class="lw-suffix">nt</span>
+            </div>
+            <div class="lw-input-row">
+              <label class="lw-label">Tamanho total Primers BIP (B1c-loop-B2)</label>
+              <div class="lw-input" style="display:flex; gap:6px; background:transparent; border:none; padding:0;">
+                <input id="tam-bip-min" type="number" class="lw-input" min="42" max="52" step="1" value="42" aria-label="Tamanho BIP mínimo">
+                <input id="tam-bip-max" type="number" class="lw-input" min="42" max="52" step="1" value="52" aria-label="Tamanho BIP máximo">
+              </div>
+              <span class="lw-suffix">nt</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="gc-range" class="lw-label">GC esperado</label>
+              <select id="gc-range" class="lw-input">
+                <option value="40-60" selected>40–60%</option>
+                <option value="40-65">40–65% (teto canônico Eiken)</option>
+                <option value="50-60">50–60% (ótimo)</option>
+                <option value="35-65">35–65%</option>
+                <option value="45-55">45–55%</option>
+              </select>
+            </div>
+            <div class="lw-input-row">
+              <label for="loops" class="lw-label">Loop primers</label>
+              <select id="loops" class="lw-input">
+                <option value="auto" selected>Automático</option>
+                <option value="on">Forçar inclusão</option>
+                <option value="off">Não incluir</option>
+              </select>
+            </div>
+            <div class="lw-input-row">
+              <label for="lc-min" class="lw-label">Complexidade Linguística mínima (LC%)</label>
+              <input id="lc-min" type="number" class="lw-input" min="70" max="90" step="1" value="75" aria-describedby="lc-help">
+              <span class="lw-suffix">%</span>
+            </div>
+            <p id="lc-help" class="lw-help" style="text-align: justify;">Complexidade linguística da sequência (LC%) é uma medida da “riqueza de vocabulário” de um texto genético, baseada na contagem do número de combinações possíveis de nucleotídeos (“entropia” do conjunto de possibilidades) em relação ao número teoricamente possível. Esse valor para a sequência é convertido em porcentagem, sendo 100% o nível mais alto. Intervalo permitido: 70–90%. Valor padrão: 75%.</p>
+          </div>
+
+          <div class="lw-card">
+            <h2>Condições de reação</h2>
+            <div class="lw-input-row">
+              <label for="na" class="lw-label">[Na+] (mM)</label>
+              <input id="na" type="number" class="lw-input" min="10" max="200" step="1" value="50">
+            </div>
+            <div class="lw-input-row">
+              <label for="mg" class="lw-label">[Mg2+] (mM)</label>
+              <input id="mg" type="number" class="lw-input" min="1" max="20" step="0.5" value="8">
+            </div>
+            <div class="lw-input-row">
+              <label for="dnTP" class="lw-label">[dNTP] (mM)</label>
+              <input id="dnTP" type="number" class="lw-input" min="0.1" max="5" step="0.1" value="1.4">
+            </div>
+          </div>
+
+          <div class="lw-card">
+            <h2>Penalidades e ranking</h2>
+            <div class="lw-input-row">
+              <label for="pen-lim-f1c-b1c" class="lw-label">Limite F1c/B1c</label>
+              <input id="pen-lim-f1c-b1c" type="number" class="lw-input" min="0" step="0.1" value="15">
+            </div>
+            <div class="lw-input-row">
+              <label for="pen-lim-f2-b2" class="lw-label">Limite F2/B2</label>
+              <input id="pen-lim-f2-b2" type="number" class="lw-input" min="0" step="0.1" value="20">
+            </div>
+            <div class="lw-input-row">
+              <label for="pen-lim-f3-b3" class="lw-label">Limite F3/B3</label>
+              <input id="pen-lim-f3-b3" type="number" class="lw-input" min="0" step="0.1" value="15">
+            </div>
+            <div class="lw-input-row">
+              <label for="max-sets" class="lw-label">Número máximo de conjuntos a testar</label>
+              <input id="max-sets" type="number" class="lw-input" min="1" max="10000" step="1" value="300">
+            </div>
+            <p class="lw-help" style="text-align: justify;">As penalidades são utilizadas apenas para ranquear os conjuntos de primers. Nenhum conjunto é reprovado por penalidade: limites servem como referência de pontuação.</p>
+          </div>
+
+          <div class="lw-card">
+            <h2>Geometria dos Alvos</h2>
+            <div class="lw-input-row">
+              <label for="dist-f2-b2" class="lw-label">Amplicon F2–B2 (5′F2→5′B2)</label>
+              <select id="dist-f2-b2" class="lw-input" aria-describedby="geo-help">
+                <option value="120-180" selected>120–180 bp</option>
+                <option value="120-160">120–160 bp (PrimerExplorer/NEB)</option>
+                <option value="120-200">120–200 bp</option>
+              </select>
+              <span class="lw-suffix">bp</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="dist-f3-f2" class="lw-label">Gap F3–F2 (3′F3→5′F2)</label>
+              <select id="dist-f3-f2" class="lw-input">
+                <option value="0-60" selected>0–60 bp</option>
+                <option value="0-20">0–20 bp (Eiken loopamp)</option>
+                <option value="0-40">0–40 bp</option>
+              </select>
+              <span class="lw-suffix">bp</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="dist-f1-b1" class="lw-label">Distância entre F1 e B1</label>
+              <select id="dist-f1-b1" class="lw-input">
+                <option value="0-60" selected>0–60 bp</option>
+              </select>
+              <span class="lw-suffix">bp</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="dist-f2-f1" class="lw-label">Distância entre F2 e F1</label>
+              <select id="dist-f2-f1" class="lw-input">
+                <option value="40-60" selected>40–60 bp</option>
+              </select>
+              <span class="lw-suffix">bp</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="dist-b2-b1" class="lw-label">Distância entre B2 e B1</label>
+              <select id="dist-b2-b1" class="lw-input">
+                <option value="40-60" selected>40–60 bp</option>
+              </select>
+              <span class="lw-suffix">bp</span>
+            </div>
+            <p id="geo-help" class="lw-help" style="text-align: justify;">Geometria conforme padrão Eiken PrimerExplorer V5 / NEB: <b>amplicon F2–B2 (5′F2→5′B2) = 120–180 bp</b> (região amplificada); <b>gap F3–F2 (3′F3→5′F2) = 0–60 bp</b>; loop F2–F1 e B2–B1 = 40–60 bp; centro F1–B1 = 0–60 bp. Correção (jun/2026): o campo antigo "F3–F2 120–180" era, na verdade, o amplicon F2–B2 — realocado e corrigido.</p>
+          </div>
+        </div>
+        <div class="lw-actions end">
+          <button class="lw-btn ghost" id="btn-param-padrao">Restaurar padrão</button>
+          <button class="lw-btn primary" id="btn-aplicar-param">Aplicar parâmetros</button>
+        </div>
+        <div class="lw-card" style="text-align:center;">
+          <img src="pcr-lamp.jpg" alt="Esquema de primers LAMP" style="max-width:100%; height:auto; border-radius:8px; border:1px solid var(--border);">
+          <p class="lw-help">Esquema ilustrativo da disposição dos primers no método LAMP.</p>
+        </div>
+      </section>
+
+      <!-- Resultados -->
+      <section class="lw-panel" id="tab-res" role="tabpanel" aria-labelledby="tabbtn-res">
+        <div class="lw-card">
+          <h2>Resultados</h2>
+          <div class="lw-results-empty" id="res-vazio">
+            Ainda não há resultados. Gere primers para visualizar aqui.
+          </div>
+          <div class="lw-results" id="res-list" hidden></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="lw-footer">
+      <div>
+        <small>
+          <strong>LAMPrime</strong> — desenho de primers LAMP no navegador (Tm nearest-neighbor SantaLucia 1998; geometria PrimerExplorer V5/NEB). Open source (MIT): <a href="https://github.com/luizdione/LAMPrime" target="_blank" rel="noopener" style="color:var(--accent);">github.com/luizdione/LAMPrime</a>.<br>
+          Laboratório de Genética Molecular — IFRJ. De-Melo, Luiz Dione Barbosa — Copyright 2025–2026.
+        </small>
+      </div>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+  // Simple language toggle based on ?lang=en and button click
+  (function(){
+    const strings = {
+      pt: {
+        title: 'LAMPrime',
+        tabs: ['Entrada','Parâmetros','Resultados'],
+        secSeq: 'Sequência alvo',
+        helpSeq: 'Cole a sequência (A, T, G, C) ou informe um identificador (ex.: GenBank).',
+        lblId: 'Identificador (opcional)',
+        phId: 'Ex.: NC_045512, MN908947, etc.',
+        lblSeq: 'Sequência',
+        phSeq: ': Cole aqui a sequência DNA...',
+        btnFasta: 'Carregar FASTA',
+        btnClear: 'Limpar',
+        btnRun: 'Gerar primers',
+        refs: 'Referências e Publicações',
+        cfg: 'Configurações básicas'
+      },
+      en: {
+        title: 'LAMPrime',
+        tabs: ['Input','Parameters','Results'],
+        secSeq: 'Target sequence',
+        helpSeq: 'Paste the sequence (A, T, G, C) or provide an identifier (e.g., GenBank).',
+        lblId: 'Identifier (optional)',
+        phId: 'e.g., NC_045512, MN908947, etc.',
+        lblSeq: 'Sequence',
+        phSeq: ': Paste DNA sequence here...',
+        btnFasta: 'Load FASTA',
+        btnClear: 'Clear',
+        btnRun: 'Generate primers',
+        refs: 'References and Publications',
+        cfg: 'Basic settings'
+      }
+    };
+    function applyLang(lang){
+      const S = strings[lang] || strings.pt;
+      document.getElementById('appTitle').textContent = S.title;
+      document.getElementById('tabbtn-entrada').textContent = S.tabs[0];
+      document.getElementById('tabbtn-param').textContent = S.tabs[1];
+      document.getElementById('tabbtn-res').textContent = S.tabs[2];
+      const h2 = document.querySelector('#tab-entrada h2'); if (h2) h2.textContent = S.secSeq;
+      const help = document.querySelector('#tab-entrada .lw-help'); if (help) help.textContent = S.helpSeq;
+      const lblId = document.querySelector('label[for="alvo-id"]'); if (lblId) lblId.textContent = S.lblId;
+      const inId = document.getElementById('alvo-id'); if (inId) inId.placeholder = S.phId;
+      const lblSeq = document.querySelector('label[for="alvo-seq"]'); if (lblSeq) lblSeq.textContent = S.lblSeq;
+      const inSeq = document.getElementById('alvo-seq'); if (inSeq) inSeq.placeholder = S.phSeq;
+      const fasta = document.querySelector('.lw-file-btn span'); if (fasta) fasta.textContent = S.btnFasta;
+      const btnClear = document.getElementById('btn-limpar'); if (btnClear) btnClear.textContent = S.btnClear;
+      const btnRun = document.getElementById('btn-executar'); if (btnRun) btnRun.textContent = S.btnRun;
+      const refs = document.querySelector('#tab-entrada .lw-info h3'); if (refs) refs.textContent = S.refs;
+      const cfg = document.querySelector('#tab-param h2'); if (cfg) cfg.textContent = S.cfg;
+      const toggle = document.getElementById('langToggle');
+      if (toggle){ toggle.textContent = (lang === 'en') ? 'Versão em Português' : 'English Version'; toggle.title = toggle.textContent; }
+      document.documentElement.lang = (lang === 'en') ? 'en' : 'pt-BR';
+    }
+    function getLangFromUrl(){
+      const m = location.search.match(/[?&]lang=(en|pt)/i);
+      return m ? m[1].toLowerCase() : 'pt';
+    }
+    let current = getLangFromUrl();
+    applyLang(current);
+    const btn = document.getElementById('langToggle');
+    if (btn){
+      btn.addEventListener('click', function(){
+        current = (current === 'en') ? 'pt' : 'en';
+        const params = new URLSearchParams(location.search);
+        params.set('lang', current);
+        history.replaceState(null, '', location.pathname + '?' + params.toString());
+        applyLang(current);
+      });
+    }
+  })();
+  </script>
+</body>
+</html>
+
