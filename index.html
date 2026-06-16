@@ -227,6 +227,31 @@
             </div>
             <p id="geo-help" class="lw-help" style="text-align: justify;" data-i18n-html="geo.help">Geometria conforme o padrão Eiken PrimerExplorer V5 / NEB: <b>amplicon F2–B2 (5′F2→5′B2) = 120–180 bp</b> (região amplificada); <b>gap F3–F2 (3′F3→5′F2) = 0–60 bp</b>; loops F2–F1 e B2–B1 = 40–60 bp; centro F1–B1 = 0–60 bp.</p>
           </div>
+
+          <div class="lw-card">
+            <h2 data-i18n="struct.h2">Estruturas secundárias (hibridação entre oligos)</h2>
+            <div class="lw-input-row">
+              <label for="t-react" class="lw-label" data-i18n="struct.treact">Temperatura de reação</label>
+              <input id="t-react" type="number" class="lw-input" min="50" max="72" step="0.5" value="63">
+              <span class="lw-suffix">°C</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="hp-th" class="lw-label" data-i18n="struct.hpth">Limiar ΔG — hairpin</label>
+              <input id="hp-th" type="number" class="lw-input" max="0" step="0.1" value="-3.0">
+              <span class="lw-suffix">kcal/mol</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="dimer-th" class="lw-label" data-i18n="struct.dimerth">Limiar ΔG — dímeros (homo/hetero)</label>
+              <input id="dimer-th" type="number" class="lw-input" max="0" step="0.1" value="-3.0">
+              <span class="lw-suffix">kcal/mol</span>
+            </div>
+            <div class="lw-input-row">
+              <label for="end-dg" class="lw-label" data-i18n="struct.enddg">Estabilidade de extremidade (ΔG ≤)</label>
+              <input id="end-dg" type="number" class="lw-input" max="0" step="0.1" value="-4.0">
+              <span class="lw-suffix">kcal/mol</span>
+            </div>
+            <p class="lw-help" style="text-align: justify;" data-i18n="struct.help">O LAMPrime avalia, à temperatura de reação, as estruturas que prejudicam a LAMP: hairpins (intramoleculares) e dímeros — hibridação entre oligos, homo e heterodímeros — pelo modelo nearest-neighbor (SantaLucia 1998). Conjuntos com qualquer estrutura mais estável (ΔG mais negativo) que o limiar são penalizados e descem no ranking; nenhum é reprovado. A estabilidade das extremidades de iniciação segue o critério Eiken (ΔG ≤ −4 kcal/mol por padrão).</p>
+          </div>
         </div>
         <div class="lw-actions end">
           <button class="lw-btn ghost" id="btn-param-padrao" data-i18n="btn.restore">Restaurar padrão</button>

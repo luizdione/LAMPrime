@@ -51,6 +51,10 @@
       'geo.opt.060':'0–60 bp', 'geo.opt.020':'0–20 bp (Eiken loopamp)', 'geo.opt.040':'0–40 bp',
       'geo.f1b1.label':'Distância F1–B1', 'geo.f2f1.label':'Distância F2–F1', 'geo.b2b1.label':'Distância B2–B1',
       'geo.help':'Geometria conforme o padrão Eiken PrimerExplorer V5 / NEB: <b>amplicon F2–B2 (5′F2→5′B2) = 120–180 bp</b> (região amplificada); <b>gap F3–F2 (3′F3→5′F2) = 0–60 bp</b>; loops F2–F1 e B2–B1 = 40–60 bp; centro F1–B1 = 0–60 bp.',
+      'struct.h2':'Estruturas secundárias (hibridação entre oligos)',
+      'struct.treact':'Temperatura de reação', 'struct.hpth':'Limiar ΔG — hairpin',
+      'struct.dimerth':'Limiar ΔG — dímeros (homo/hetero)', 'struct.enddg':'Estabilidade de extremidade (ΔG ≤)',
+      'struct.help':'O LAMPrime avalia, à temperatura de reação, as estruturas que prejudicam a LAMP: hairpins (intramoleculares) e dímeros — hibridação entre oligos, homo e heterodímeros — pelo modelo nearest-neighbor (SantaLucia 1998). Conjuntos com qualquer estrutura mais estável (ΔG mais negativo) que o limiar são penalizados e descem no ranking; nenhum é reprovado. A estabilidade das extremidades de iniciação segue o critério Eiken (ΔG ≤ −4 kcal/mol por padrão).',
       'btn.restore':'Restaurar padrão', 'btn.apply':'Aplicar parâmetros',
       'img.caption':'Esquema ilustrativo da disposição dos primers no método LAMP.',
       'res.h2':'Resultados',
@@ -70,7 +74,7 @@
       'res.inner':'Primers internos  (FIP = F1c–loop–F2 · BIP = B1c–loop–B2)',
       'res.loopHdr':'Loop primers (aceleram a reação)',
       'res.positions':'Posições (1-based)', 'res.distances':'Distâncias',
-      'res.struct':'Estrutura 2ª (@63 °C)', 'res.worstHp':'pior hairpin ΔG', 'res.worstDi':'pior dímero ΔG',
+      'res.struct': t => `Estrutura 2ª (@${t} °C)`, 'res.worstHp':'pior hairpin ΔG', 'res.worstDi':'pior dímero ΔG',
       'res.allOk':'✓ todos os primers dentro das faixas de Tm/GC/LC', 'res.copy':'copiar',
       'res.set':'Conjunto', 'res.penalty':'penalidade', 'res.amplicon':'amplicon',
       'warn.hairpin':'hairpin', 'warn.selfdimer':'self-dímero', 'warn.dimer':'dímero',
@@ -112,6 +116,10 @@
       'geo.opt.060':'0–60 bp', 'geo.opt.020':'0–20 bp (Eiken loopamp)', 'geo.opt.040':'0–40 bp',
       'geo.f1b1.label':'F1–B1 distance', 'geo.f2f1.label':'F2–F1 distance', 'geo.b2b1.label':'B2–B1 distance',
       'geo.help':'Geometry per the Eiken PrimerExplorer V5 / NEB standard: <b>F2–B2 amplicon (5′F2→5′B2) = 120–180 bp</b> (amplified region); <b>F3–F2 gap (3′F3→5′F2) = 0–60 bp</b>; F2–F1 and B2–B1 loops = 40–60 bp; F1–B1 center = 0–60 bp.',
+      'struct.h2':'Secondary structures (oligo hybridization)',
+      'struct.treact':'Reaction temperature', 'struct.hpth':'ΔG threshold — hairpin',
+      'struct.dimerth':'ΔG threshold — dimers (homo/hetero)', 'struct.enddg':'End stability (ΔG ≤)',
+      'struct.help':'At the reaction temperature, LAMPrime evaluates the structures that hinder LAMP: hairpins (intramolecular) and dimers — oligo hybridization, homo- and hetero-dimers — using the nearest-neighbor model (SantaLucia 1998). Sets with any structure more stable (more negative ΔG) than the threshold are penalized and ranked lower; none are rejected. Priming-end stability follows the Eiken criterion (ΔG ≤ −4 kcal/mol by default).',
       'btn.restore':'Restore defaults', 'btn.apply':'Apply parameters',
       'img.caption':'Schematic of primer arrangement in the LAMP method.',
       'res.h2':'Results',
@@ -131,7 +139,7 @@
       'res.inner':'Inner primers  (FIP = F1c–loop–F2 · BIP = B1c–loop–B2)',
       'res.loopHdr':'Loop primers (accelerate the reaction)',
       'res.positions':'Positions (1-based)', 'res.distances':'Distances',
-      'res.struct':'Secondary structure (@63 °C)', 'res.worstHp':'worst hairpin ΔG', 'res.worstDi':'worst dimer ΔG',
+      'res.struct': t => `Secondary structure (@${t} °C)`, 'res.worstHp':'worst hairpin ΔG', 'res.worstDi':'worst dimer ΔG',
       'res.allOk':'✓ all primers within Tm/GC/LC ranges', 'res.copy':'copy',
       'res.set':'Set', 'res.penalty':'penalty', 'res.amplicon':'amplicon',
       'warn.hairpin':'hairpin', 'warn.selfdimer':'self-dimer', 'warn.dimer':'dimer',
@@ -204,7 +212,11 @@
     penLimF1cB1c: 15,
     penLimF2B2: 20,
     penLimF3B3: 15,
-    maxSets: 300
+    maxSets: 300,
+    tReact: 63,
+    hpTh: -3.0,
+    dimerTh: -3.0,
+    endDg: -4.0
   };
 
   const els = {
@@ -236,6 +248,10 @@
     penLimF2B2: qs('#pen-lim-f2-b2'),
     penLimF3B3: qs('#pen-lim-f3-b3'),
     maxSets: qs('#max-sets'),
+    tReact: qs('#t-react'),
+    hpTh: qs('#hp-th'),
+    dimerTh: qs('#dimer-th'),
+    endDg: qs('#end-dg'),
   };
 
   const btnPadrao = qs('#btn-param-padrao');
@@ -344,14 +360,15 @@
   // ===== Estruturas secundárias: hairpin, homodímero, heterodímero =====
   // ΔG (kcal/mol) na TEMPERATURA DE REAÇÃO (~63 °C): só estruturas estáveis nessa
   // faixa (60–65 °C) atrapalham a LAMP. Modelo NN SantaLucia 1998.
-  const TREACT_K = 63 + 273.15;
+  let REACT_C = 63;                         // temperatura de reação (°C), ajustável pelo usuário
+  const TREACT_K = () => (REACT_C + 273.15);
   function segDG(seg) { // ΔG de um duplexo perfeitamente pareado de `seg`
     seg = (seg||'').toUpperCase(); const N = seg.length; if (N < 2) return 0;
     let dH=0, dS=0;
     for (let i=0;i<N-1;i++){ const d=seg.substr(i,2); if(NN_DH[d]===undefined) continue; dH+=NN_DH[d]; dS+=NN_DS[d]; }
     const ini = b => (b==='G'||b==='C') ? [0.1,-2.8] : [2.3,4.1];
     const [h5,s5]=ini(seg[0]); const [h3,s3]=ini(seg[N-1]); dH+=h5+h3; dS+=s5+s3;
-    return dH - TREACT_K*dS/1000;
+    return dH - TREACT_K()*dS/1000;
   }
   // duplexo antiparalelo mais estável entre a e b (b=a → homodímero)
   function dimerDG(a, b) {
@@ -385,18 +402,19 @@
   }
   // varre estruturas dos primers do conjunto: hairpins, self e cross-dímeros.
   // Avisos retornados como tokens estruturados (traduzidos no render).
-  const STRUCT_TH = -3.0; // ΔG limiar (kcal/mol @63°C): mais negativo = problemático
-  function structureScan(primers) {
+  // limiares de ΔG (kcal/mol) na temperatura de reação: mais negativo = problemático.
+  // hpTh (hairpin intramolecular) e diTh (dímeros homo/hetero) vêm dos parâmetros.
+  function structureScan(primers, hpTh, diTh) {
     let pen=0; const warns=[]; let worstHp=0, worstDi=0;
     for (const p of primers){
       const hp=hairpinDG(p.seq); if (hp<worstHp) worstHp=hp;
-      if (hp<STRUCT_TH){ pen += (STRUCT_TH-hp); warns.push({t:'hairpin', n:p.name, v:hp.toFixed(1)}); }
+      if (hp<hpTh){ pen += (hpTh-hp); warns.push({t:'hairpin', n:p.name, v:hp.toFixed(1)}); }
       const sd=dimerDG(p.seq, p.seq); if (sd<worstDi) worstDi=sd;
-      if (sd<STRUCT_TH){ pen += (STRUCT_TH-sd); warns.push({t:'selfdimer', n:p.name, v:sd.toFixed(1)}); }
+      if (sd<diTh){ pen += (diTh-sd); warns.push({t:'selfdimer', n:p.name, v:sd.toFixed(1)}); }
     }
     for (let a=0;a<primers.length;a++) for (let b=a+1;b<primers.length;b++){
       const cd=dimerDG(primers[a].seq, primers[b].seq); if (cd<worstDi) worstDi=cd;
-      if (cd<STRUCT_TH){ pen += (STRUCT_TH-cd)*0.8; warns.push({t:'dimer', n:`${primers[a].name}/${primers[b].name}`, v:cd.toFixed(1)}); }
+      if (cd<diTh){ pen += (diTh-cd)*0.8; warns.push({t:'dimer', n:`${primers[a].name}/${primers[b].name}`, v:cd.toFixed(1)}); }
     }
     return { penalty: pen*3, warns, worstHairpin: worstHp, worstDimer: worstDi };
   }
@@ -448,13 +466,15 @@
       gapF3F2:parseRange(els.distF3F2&&els.distF3F2.value,0,60),    // gap real 3'F3→5'F2 (Eiken/NEB: 0–60)
       loopLinker:((els.loopSeq&&els.loopSeq.value)||'').toUpperCase().replace(/[^ATGC]/g,''),
       limF1cB1c:num(els.penLimF1cB1c,15), limF2B2:num(els.penLimF2B2,20), limF3B3:num(els.penLimF3B3,15),
-      maxSets:Math.max(1,Math.min(10000,parseInt((els.maxSets&&els.maxSets.value)||300,10)))
+      maxSets:Math.max(1,Math.min(10000,parseInt((els.maxSets&&els.maxSets.value)||300,10))),
+      tReact:num(els.tReact,63), hpTh:num(els.hpTh,-3.0), dimerTh:num(els.dimerTh,-3.0), endDg:num(els.endDg,-4.0)
     };
   }
 
   function designLAMP(S, P) {
     const N=S.length;
     if (N<120) return {errorKey:'alert.shortSeq'};
+    REACT_C = (P.tReact!=null) ? P.tReact : 63; // ΔG das estruturas 2ª na temperatura de reação
     const innerLenMin=18, innerLenMax=26;
     const geom={ f2b2:P.d_F2B2, gap:P.gapF3F2, loopF2F1:P.d_F2F1, f1b1:P.d_F1B1 };
 
@@ -541,8 +561,8 @@
         if (!fipOk) warns.push({t:'len', n:'FIP', v:FIP.length}); if (!bipOk) warns.push({t:'len', n:'BIP', v:BIP.length});
         // estabilidade das extremidades de iniciação (Eiken: ΔG ≤ -4 kcal/mol)
         let dgPen=0;
-        [['F3',F3,'3'],['F2',F2,'3'],['B3',B3,'3'],['B2',B2,'3']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>-4){dgPen++; warns.push({t:'dg', n, end:e, v:g.toFixed(1)});} });
-        [['F1c',F1c,'5'],['B1c',B1c,'5']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>-4){dgPen++; warns.push({t:'dg', n, end:e, v:g.toFixed(1)});} });
+        [['F3',F3,'3'],['F2',F2,'3'],['B3',B3,'3'],['B2',B2,'3']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>P.endDg){dgPen++; warns.push({t:'dg', n, end:e, v:g.toFixed(1)});} });
+        [['F1c',F1c,'5'],['B1c',B1c,'5']].forEach(([n,s,e])=>{ const g=endDeltaG(s,e); if(g>P.endDg){dgPen++; warns.push({t:'dg', n, end:e, v:g.toFixed(1)});} });
         const penalty=(pInner+pF2B2+pF3B3)*100 + gcPen*5 + lcPen*5 + dgPen*4 + (fipOk?0:8) + (bipOk?0:8);
 
         sets.push({
@@ -566,14 +586,14 @@
       const prims=[{name:'F3',seq:s.F3.seq},{name:'B3',seq:s.B3.seq},{name:'FIP',seq:s.FIP.seq},{name:'BIP',seq:s.BIP.seq}];
       if (s.LF) prims.push({name:'LF',seq:s.LF.seq});
       if (s.LB) prims.push({name:'LB',seq:s.LB.seq});
-      const st=structureScan(prims);
+      const st=structureScan(prims, P.hpTh, P.dimerTh);
       s.penalty += st.penalty;
       s.struct={ hairpin:st.worstHairpin, dimer:st.worstDimer };
       if (st.warns.length) s.warns=(s.warns||[]).concat(st.warns);
     }
     uniq.sort((a,b)=>a.penalty-b.penalty);
     uniq.forEach((s,i)=>s.rank=i+1);
-    return { sets:uniq, totalCandidates:sets.length, geom, params:P, targetLen:N, gc:Math.round(gcPct(S)) };
+    return { sets:uniq, totalCandidates:sets.length, geom, params:P, targetLen:N, gc:Math.round(gcPct(S)), tReact:P.tReact };
   }
 
   // formata um aviso estruturado no idioma atual
@@ -641,7 +661,7 @@
         ${row('LB', set.LB)}
         <div class="lw-kv"><div>${D['res.positions']}</div><div>F3 ${set.coords.F3.join('–')} · F2 ${set.coords.F2.join('–')} · F1 ${set.coords.F1.join('–')} · B1 ${set.coords.B1.join('–')} · B2 ${set.coords.B2.join('–')} · B3 ${set.coords.B3.join('–')}</div></div>
         <div class="lw-kv"><div>${D['res.distances']}</div><div>F2–B2 ${set.ampliconF2B2} nt · F1–B1 ${set.dF1B1} nt</div></div>
-        ${set.struct ? `<div class="lw-kv"><div>${D['res.struct']}</div><div>${D['res.worstHp']} ${set.struct.hairpin.toFixed(1)} · ${D['res.worstDi']} ${set.struct.dimer.toFixed(1)} kcal/mol</div></div>` : ''}
+        ${set.struct ? `<div class="lw-kv"><div>${D['res.struct'](data.tReact!=null?data.tReact:63)}</div><div>${D['res.worstHp']} ${set.struct.hairpin.toFixed(1)} · ${D['res.worstDi']} ${set.struct.dimer.toFixed(1)} kcal/mol</div></div>` : ''}
         ${warn}
       `;
       resList.appendChild(card);
