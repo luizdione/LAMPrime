@@ -1,48 +1,76 @@
-# Widget LAMP Primer Designer (Básico)
+# LAMPrime — in-browser LAMP primer designer
 
-Um mini‑projeto estático (HTML/CSS/JS) inspirado no layout do NEB LAMP (https://lamp.neb.com/#!/), pronto para ser embutido em um subdiretório da sua página HTML.
+LAMPrime is a small, dependency-free web tool (HTML/CSS/JavaScript) that designs
+**LAMP** (loop-mediated isothermal amplification) primer sets entirely in the
+browser. The sequence never leaves the device: there is no server, no upload and
+no network call during design, so it runs offline and keeps the input private.
 
-Este widget não realiza cálculos de primers (é apenas UI). Ele serve como base para acrescentar parâmetros e lógica posteriormente.
+From a target sequence it enumerates the six LAMP regions
+(**F3, F2, F1, B1, B2, B3**) under PrimerExplorer V5 / NEB distance constraints
+and assembles the complete primer set: outer **F3/B3**, inner **FIP = F1c–F2**
+and **BIP = B1c–B2**, and loop primers **LF/LB**.
 
-## Estrutura
+## Method
 
-- index.html — página principal do widget (sem dependências externas)
-- styles.css — estilos leves e responsivos (dark theme)
-- app.js — interação básica (abas, leitura de FASTA, mock de resultados)
+- **Melting temperature** — nearest-neighbor model (SantaLucia, 1998) with salt
+  correction and a monovalent-equivalent treatment of Mg²⁺ (von Ahsen, 2001:
+  `Na_eq = Na⁺ + 120·√(Mg²⁺_free)`, `Mg²⁺_free = Mg²⁺ − dNTP`). Defaults follow the
+  NEB condition (Na⁺ 50 mM, Mg²⁺ 8 mM, dNTP 1.4 mM, oligo 50 nM); inner window
+  64–66 °C, outer 59–61 °C.
+- **Geometry** — F2–B2 amplicon 120–180 nt; F3–F2 gap 0–60 nt; loop spans
+  40–60 nt; F1–B1 centre 0–60 nt (Eiken PrimerExplorer V5 / NEB).
+- **Quality filters** — GC%, end stability ΔG (Eiken criterion ≤ −4 kcal/mol) and
+  a linguistic-complexity screen to reject low-complexity primers.
+- **Secondary-structure screen** — at the reaction temperature (default 63 °C)
+  each candidate set is scanned for hairpins, self-dimers and cross-dimers; sets
+  with a structure more stable than the threshold (default −3 kcal/mol) are
+  penalised, and the finalists are re-ranked accordingly. Reported per set as the
+  worst hairpin and worst dimer ΔG. The reaction temperature and the
+  hairpin/dimer and end-stability thresholds are exposed in the interface and are
+  user-adjustable.
 
-## Como embutir na sua página
+References implemented: Notomi 2000; Nagamine 2002; Tomita 2008; SantaLucia 1998;
+von Ahsen 2001.
 
-1. Copie a pasta `static/lamp_widget` para um subdiretório do seu site. Exemplo:
-   - `seu-site/neb-lamp/` contendo `index.html`, `styles.css`, `app.js`.
+> This is the real, current tool — a full client-side primer-design engine. (An
+> earlier prototype was a UI-only mock; that is no longer the case.)
 
-2. Existem duas formas comuns de embutir:
+## Files
 
-   - Via `<iframe>` (recomendado por isolamento):
+- `index.html` / `LAMPrime.html` — the application page (identical; `LAMPrime.html`
+  is the deployed entry point).
+- `app.js` — the design engine plus a built-in PT/EN interface toggle.
+- `styles.css` — styling (dark theme).
+- `tools/concordance.py` — deterministic validation script (see below).
 
-     ```html
-     <iframe src="neb-lamp/index.html" style="width:100%;height:720px;border:none;border-radius:8px;overflow:hidden"></iframe>
-     ```
+## Use
 
-   - Via inclusão direta (copiando o conteúdo do `index.html` para dentro da sua página) e ajustando os caminhos para `styles.css` e `app.js`.
+Open `index.html` (or `LAMPrime.html`) in any modern browser, or serve the folder
+statically. Paste a sequence or load a FASTA file (`>` headers are ignored), set
+the parameters, and generate the ranked primer sets. Each set reports Tm, GC%,
+penalty, coordinates and the secondary-structure summary. The language button
+switches the whole interface between Portuguese and English.
 
-## Fluxo de uso (UI)
+Live instance: https://www.ifrj-crj-geneticamolecular.online/aplicativos/pcr_lamp/LAMPrime.html
 
-- Aba Entrada: cole a sequência ou carregue um arquivo FASTA (headers ">" são ignorados). Clique em "Gerar primers" para simular resultados.
-- Aba Parâmetros: ajuste Tm alvo, faixa de GC, inclusão de primers de loop e condições da reação. No momento, são apenas visuais.
-- Aba Resultados: exibe cards com um conjunto de primers fictícios (mock) para demonstrar o layout.
+## Validation
 
-## Próximos passos sugeridos
+`tools/concordance.py` is a deterministic, dependency-light script (standard
+library only) that re-scores **published, experimentally validated** LAMP primer
+sets with the exact same nearest-neighbor model used by LAMPrime, locating each
+primer on its target and reporting position, Tm, GC% and amplicon sizes, plus the
+secondary-structure summary at 63 °C.
 
-- Conectar com uma API local (por exemplo, rotas já existentes no repositório com Flask) para gerar resultados reais a partir do algoritmo (ver LAMP_Primer_Designer*.py).
-- Adicionar validações (comprimento mínimo, alfabeto estrito ATGC, remoção de Ns).
-- Permitir salvar CSV/JSON (os botões podem chamar funções parecidas com as de `templates/index.html`).
-- Exibir Tm e penalidades vindas do servidor; incluir LF/LB quando disponíveis.
+```bash
+python tools/concordance.py
+```
 
-## Acessibilidade
+Targets: *Anaplasma marginale* msp1b (Giglioti et al., 2018; synthetic gBlocks
+target from GenBank M59845.1) and SARS-CoV-2 spike (Prakash et al., 2023; spike
+CDS fetched from NCBI NC_045512.2 at run time). These match the validation
+reported in the manuscript.
 
-- Navegação por abas com atributos ARIA.
-- Foco visível em botões e inputs.
+## License
 
-## Licença
-
-Uso interno no projeto do autor. Ajuste conforme necessário.
+MIT — see [LICENSE](LICENSE). © 2026 Luiz Dione Barbosa de Melo. Source code and
+issues: https://github.com/luizdione/LAMPrime
