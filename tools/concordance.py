@@ -4,9 +4,9 @@
 concordance.py - Concordancia LAMPrime vs primers LAMP PUBLICADOS.
 Para cada patogeno: localiza cada primer publicado na sequencia-alvo e calcula
 Tm (modelo NN identico ao LAMPrime: SantaLucia 1998 + von Ahsen Mg->Na) + GC + posicao.
-Reprodutivel. Saida: concordancia geometrica e termodinamica com ensaios LAMP publicados.
+Reprodutivel e offline (sequencias-alvo lidas de data/; rede so se faltar arquivo). Saida: concordancia geometrica e termodinamica com ensaios LAMP publicados.
 """
-import sys, math, urllib.request
+import sys, math, os, urllib.request
 sys.stdout.reconfigure(encoding='utf-8')
 
 NN_DH={'AA':-7.9,'AT':-7.2,'TA':-7.2,'CA':-8.5,'GT':-8.4,'CT':-7.8,'GA':-8.2,'CG':-10.6,'GC':-9.8,'GG':-8.0,'AC':-8.4,'AG':-7.8,'TC':-8.2,'TG':-8.5,'TT':-7.9,'CC':-8.0}
@@ -79,31 +79,33 @@ def report(name, target, P):
 # A. marginale: msp1b (Giglioti 2018); SARS-CoV-2: gene S (Prakash 2023).
 # (O ensaio de msp5 NAO e usado para concordancia — primers de isolado divergente — removido.)
 
-# busca S gene SARS-CoV-2 (NC_045512.2 CDS 21563-25384)
-sgene=''
-try:
+# Sequencias-alvo lidas de data/ (offline, deterministico). Fetch via rede so se faltar.
+DATA=os.path.join(os.path.dirname(os.path.abspath(__file__)),'data')
+def load_fasta(fname, fetch=None):
+    p=os.path.join(DATA,fname)
+    if os.path.exists(p):
+        seq=''.join(l.strip() for l in open(p,encoding='utf-8') if not l.startswith('>'))
+        return ''.join(c for c in seq.upper() if c in 'ATGCN')
+    if fetch is not None:
+        print('FASTA ausente (%s); baixando...'%fname)
+        try: return fetch()
+        except Exception as e: print('FALHA fetch:', e)
+    return ''
+def _fetch_sgene():
     url='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=NC_045512.2&rettype=fasta&retmode=text&seq_start=21563&seq_stop=25384'
     raw=urllib.request.urlopen(url, timeout=30).read().decode()
-    sgene=''.join(l.strip() for l in raw.splitlines() if not l.startswith('>'))
-    sgene=''.join(c for c in sgene.upper() if c in 'ATGCN')
-    print('S gene baixado:', len(sgene), 'nt')
-except Exception as e:
-    print('FALHA fetch S gene:', e)
+    seq=''.join(l.strip() for l in raw.splitlines() if not l.startswith('>'))
+    return ''.join(c for c in seq.upper() if c in 'ATGCN')
+
+# A. marginale msp1b: alvo sintetico (gBlocks) de Giglioti 2018 (base GenBank M59845.1).
+# SARS-CoV-2 gene S: CDS de NC_045512.2 (21563-25384), Prakash 2023.
+msp1b=load_fasta('amarginale_msp1b_synthetic.fasta')
+sgene=load_fasta('sarscov2_spike_NC045512.2_21563-25384.fasta', fetch=_fetch_sgene)
+if sgene: print('S gene:', len(sgene), 'nt')
 
 sarscov2={'F3':'TGGTGATATTGCTGCTAGA','B3':'GCACTATTAAATTGGTGGGC',
  'FIP':'AGGTCCAACCAGAAGTGATTCACCTTTGCTCACAGATG','BIP':'GCAGGTGCTGCATTACAATCTGTGTAACTCCAATACCA',
  'LF':'GCTAACAGTGCAGAAGTGTATT','LB':'GCTATGCAAATGGCTTATAGGT'}
-
-# ---- A. marginale msp1b (Giglioti et al. 2018, Exp Appl Acarol) ----
-# Alvo = fragmento sintetico (gBlocks) de msp1b (M59845.1) IMPRESSO no paper (pag. 2);
-# primers = Tabela 1. Todos os 6 ocorrem nesta sequencia -> concordancia completa.
-msp1b=('GGTAAACTCAAGAGCTCAGATGCACCCAAGGACCTTGACCAGAGCATT'
- 'GACGCACTACCGTTCATGGATGAAGCACCTGACACTGGTGAGAAGATTGAAGTA'
- 'CCAGCGGGTGAGGAGCAAGAATTTGGCAAGGCAGCAGCTTGGGGTCTAGCA'
- 'GGCTTCAAGCGTACAGTGGATGAAAGCCTGGAGATGTTAGACCGAGGCATG'
- 'CACATGCTCGCGGAAGGCCAGGCACAGATATCACAGGGGATTGACGCCAAG'
- 'GATACTGCACTAGTTAGGGAAGGTCTGGAAACATCTAGACTTGGTGCAGGGTTA'
- 'TGTCGCAATGGCTTGGTAGAGGCCTCCTACGGCGTTGGTTA')
 amarginale_msp1b={'F3':'GCACTACCGTTCATGGATGA','B3':'TCCCCTGTGATATCTGTGCC',
  'FIP':'TGCCTTGCCAAATTCTTGCTCCCACCTGACACTGGTGAGAAG',
  'BIP':'AGCAGGCTTCAAGCGTACAGTTCCGCGAGCATGTGCA',
