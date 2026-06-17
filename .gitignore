@@ -1,44 +1,24 @@
-# Calculation/tool repository — neutral patterns.
+# =====================================================================
+#  LAMPrime — app web. Estratégia allowlist: ignora tudo e libera só o app.
+#  (material de trabalho/paper e backups ficam fora, sem serem nomeados)
+# =====================================================================
 
-# Local working material (kept out of the public repository)
-/src/
-/build/
-/figuras/
+# 1) ignora tudo no nível superior...
+/*
 
-# Downloaded data (reproduce via scripts; do not version)
-/data/*
-!/data/.gitkeep
+# 2) ...e libera apenas o app web publicável
+!/.gitignore
+!/LICENSE
+!/README.md
+!/app.js
+!/index.html
+!/styles.css
+!/pcr-lamp.jpg
+!/tools/
 
-# Large calculation outputs
-/results/*
-!/results/.gitkeep
-
-# Python
+# 3) artefatos transitórios
 __pycache__/
 *.py[cod]
-.ipynb_checkpoints/
-.venv/
-venv/
-env/
-
-# LaTeX / office artifacts
-*.aux
-*.toc
-*.out
-*.log
-*.docx
-*.tex
-
-# Large bioinformatics files
-*.vcf
-*.vcf.gz
-*.bam
-*.bai
-*.fa
-*.fasta
-*.fai
-
-# OS / editors
 .DS_Store
 Thumbs.db
 desktop.ini
