@@ -22,6 +22,7 @@
         <button class="lw-tab is-active" role="tab" aria-selected="true" aria-controls="tab-entrada" id="tabbtn-entrada" data-i18n="tab.input">Entrada</button>
         <button class="lw-tab" role="tab" aria-selected="false" aria-controls="tab-param" id="tabbtn-param" data-i18n="tab.params">Parâmetros</button>
         <button class="lw-tab" role="tab" aria-selected="false" aria-controls="tab-res" id="tabbtn-res" data-i18n="tab.results">Resultados</button>
+        <button class="lw-tab" role="tab" aria-selected="false" aria-controls="tab-espec" id="tabbtn-espec" data-i18n="tab.spec">Especificidade</button>
       </nav>
     </header>
 
@@ -271,6 +272,43 @@
             Ainda não há resultados. Gere primers para visualizá-los aqui.
           </div>
           <div class="lw-results" id="res-list" hidden></div>
+        </div>
+      </section>
+
+      <!-- Especificidade -->
+      <section class="lw-panel" id="tab-espec" role="tabpanel" aria-labelledby="tabbtn-espec">
+        <div class="lw-card">
+          <h2 data-i18n="spec.h2">Especificidade (triagem in silico)</h2>
+          <p class="lw-help" style="text-align:justify;" data-i18n="spec.help">Etapa opcional: tria os primers do conjunto melhor ranqueado (Conjunto #1) contra sequências de fundo, sinalizando primers que poderiam anelar e iniciar em organismos próximos. Usa semente 3′ exata + extensão (k-mer/alinhamento), não ML.</p>
+          <div class="lw-input-row">
+            <label for="spec-acc" class="lw-label" data-i18n="spec.acc.label">Acessos NCBI (opcional)</label>
+            <input id="spec-acc" type="text" class="lw-input" data-i18n-ph="spec.acc.ph" placeholder="Ex.: NC_043815.1, AY648786.1 (vírgula/espaço)">
+          </div>
+          <div class="lw-actions">
+            <button id="btn-fetch-ncbi" class="lw-btn ghost" data-i18n="btn.fetchncbi">Buscar FASTA no NCBI</button>
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-bg" class="lw-label" data-i18n="spec.bg.label">Sequências de fundo (FASTA)</label>
+            <textarea id="spec-bg" class="lw-textarea" data-i18n-ph="spec.bg.ph" placeholder="Cole um ou mais FASTA de fundo (genomas/genes de organismos próximos)..." spellcheck="false"></textarea>
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-seed" class="lw-label" data-i18n="spec.seed.label">Âncora 3′ exata (semente)</label>
+            <input id="spec-seed" type="number" class="lw-input" min="8" max="20" step="1" value="13">
+            <span class="lw-suffix">nt</span>
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-maxmm" class="lw-label" data-i18n="spec.maxmm.label">Máx. de mismatches (primer inteiro)</label>
+            <input id="spec-maxmm" type="number" class="lw-input" min="0" max="6" step="1" value="2">
+          </div>
+          <div class="lw-actions">
+            <button id="btn-screen" class="lw-btn primary" data-i18n="btn.screen">Triar especificidade</button>
+          </div>
+          <p class="lw-help" style="font-style:italic;" data-i18n="spec.privacy">Privacidade: a triagem roda no seu navegador e os primers não saem da página. A rede só é acessada se você usar “Buscar FASTA no NCBI” (são enviados apenas os identificadores públicos).</p>
+        </div>
+        <div class="lw-card">
+          <h2 data-i18n="spec.res.h2">Resultado da triagem</h2>
+          <div class="lw-results-empty" id="spec-vazio" data-i18n="spec.empty">Sem triagem ainda. Gere primers (aba Entrada) e informe sequências de fundo.</div>
+          <div class="lw-results" id="spec-list" hidden></div>
         </div>
       </section>
     </main>
