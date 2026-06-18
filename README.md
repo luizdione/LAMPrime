@@ -67,8 +67,8 @@ python tools/concordance.py
 
 Targets: *Anaplasma marginale* msp1b (Giglioti et al., 2018; synthetic gBlocks
 target from GenBank M59845.1) and SARS-CoV-2 spike (Prakash et al., 2023; spike
-CDS fetched from NCBI NC_045512.2 at run time). These match the validation
-reported in the manuscript.
+CDS) — both targets are read offline from committed FASTA files in `tools/data/`, so the script is fully deterministic; the spike CDS is fetched from NCBI NC_045512.2 only if its file is missing. These are the reference
+validation targets used in this work.
 
 ## License
 
