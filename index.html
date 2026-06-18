@@ -281,6 +281,19 @@
           <h2 data-i18n="spec.h2">Especificidade (triagem in silico)</h2>
           <p class="lw-help" style="text-align:justify;" data-i18n="spec.help">Etapa opcional: tria os primers do conjunto melhor ranqueado (Conjunto #1) contra sequências de fundo, sinalizando primers que poderiam anelar e iniciar em organismos próximos. Usa semente 3′ exata + extensão (k-mer/alinhamento), não ML.</p>
           <div class="lw-input-row">
+            <label for="spec-org" class="lw-label" data-i18n="spec.org.label">Organismo-alvo (busca NCBI)</label>
+            <input id="spec-org" type="text" class="lw-input" list="spec-org-list" autocomplete="off" data-i18n-ph="spec.org.ph" placeholder="Digite o nome da espécie (ex.: Babesia bigemina)">
+            <datalist id="spec-org-list"></datalist>
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-genome" class="lw-label" data-i18n="spec.genome.label">Genoma / sequência (RefSeq)</label>
+            <select id="spec-genome" class="lw-input"><option value="" data-i18n="spec.genome.none">— busque um organismo acima —</option></select>
+          </div>
+          <div class="lw-actions">
+            <button id="btn-list-genomes" class="lw-btn ghost" data-i18n="btn.listgenomes">Listar genomas (NCBI)</button>
+            <button id="btn-add-genome" class="lw-btn ghost" data-i18n="btn.addgenome">Adicionar ao fundo</button>
+          </div>
+          <div class="lw-input-row">
             <label for="spec-acc" class="lw-label" data-i18n="spec.acc.label">Acessos NCBI (opcional)</label>
             <input id="spec-acc" type="text" class="lw-input" data-i18n-ph="spec.acc.ph" placeholder="Ex.: NC_043815.1, AY648786.1 (vírgula/espaço)">
           </div>

@@ -107,6 +107,18 @@
       'spec.clean': n => `✓ ${n}: sem anelamento 3′-ancorado`,
       'spec.multi':'Atenção: vários primers anelando ao mesmo fundo podem indicar risco de amplificação cruzada.',
       'spec.note':'Um hit é o melhor alinhamento sem gaps com semente 3′ exata; indica possível anelamento, não prova amplificação.',
+      'spec.org.label':'Organismo-alvo (busca NCBI)',
+      'spec.org.ph':'Digite o nome da espécie (ex.: Babesia bigemina)',
+      'btn.listgenomes':'Listar genomas (NCBI)',
+      'spec.genome.label':'Genoma / sequência (RefSeq)',
+      'spec.genome.none':'— busque um organismo acima —',
+      'btn.addgenome':'Adicionar ao fundo',
+      'btn.listing':'Listando...',
+      'alert.specNoOrg':'Digite ou selecione um organismo (ex.: Babesia bigemina) e tente novamente.',
+      'alert.specNoGenome':'Selecione um genoma/sequência na lista (use “Listar genomas (NCBI)” primeiro).',
+      'spec.genomeNoneFound':'— nenhuma sequência RefSeq genômica encontrada; tente outro nome ou use um acesso —',
+      'spec.genomeOpt': (acc, len, title) => `${acc} · ${len} nt · ${title}`,
+      'alert.specGenomeErr':'Falha ao consultar genomas no NCBI (rede). Detalhe: ',
     },
     en: {
       'tab.input':'Input', 'tab.params':'Parameters', 'tab.results':'Results',
@@ -199,6 +211,18 @@
       'spec.clean': n => `✓ ${n}: no 3′-anchored anneal`,
       'spec.multi':'Warning: several primers annealing to the same background may indicate cross-amplification risk.',
       'spec.note':'A hit is the best gap-free alignment with an exact 3′ seed; it indicates possible annealing, not proof of amplification.',
+      'spec.org.label':'Target organism (NCBI search)',
+      'spec.org.ph':'Type the species name (e.g., Babesia bigemina)',
+      'btn.listgenomes':'List genomes (NCBI)',
+      'spec.genome.label':'Genome / sequence (RefSeq)',
+      'spec.genome.none':'— search an organism above —',
+      'btn.addgenome':'Add to background',
+      'btn.listing':'Listing...',
+      'alert.specNoOrg':'Type or select an organism (e.g., Babesia bigemina) and try again.',
+      'alert.specNoGenome':'Select a genome/sequence from the list (use "List genomes (NCBI)" first).',
+      'spec.genomeNoneFound':'— no RefSeq genomic sequence found; try another name or use an accession —',
+      'spec.genomeOpt': (acc, len, title) => `${acc} · ${len} nt · ${title}`,
+      'alert.specGenomeErr':'Failed to query genomes at NCBI (network). Detail: ',
     }
   };
   let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); return m?m[1].toLowerCase():'pt'; })();
@@ -768,6 +792,11 @@
   const btnScreen = qs('#btn-screen');
   const specEmpty = qs('#spec-vazio');
   const specList = qs('#spec-list');
+  const specOrg = qs('#spec-org');
+  const specOrgList = qs('#spec-org-list');
+  const btnListGenomes = qs('#btn-list-genomes');
+  const specGenome = qs('#spec-genome');
+  const btnAddGenome = qs('#btn-add-genome');
   let lastSpec = null; // {rank, primers, bgs, k, maxMM} — re-render ao trocar idioma
 
   function parseFastaMulti(text) {
@@ -835,22 +864,75 @@
     });
   }
 
+  // E-utilities: baixa o FASTA (nuccore) de uma lista de acessos
+  async function efetchFasta(ids) {
+    const parts=[];
+    for (const id of ids){
+      const url=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${encodeURIComponent(id)}&rettype=fasta&retmode=text`;
+      const r=await fetch(url); if (!r.ok) throw new Error(`${id}: HTTP ${r.status}`);
+      const t=(await r.text()).trim(); if (!t.startsWith('>')) throw new Error(`${id}: ${t.slice(0,80)}`);
+      parts.push(t);
+    }
+    return parts.join('\n');
+  }
+  function appendBg(text) { specBg.value=(specBg.value.trim() ? specBg.value.trim()+'\n' : '')+text; }
+
   if (btnFetch) btnFetch.addEventListener('click', async () => {
     const accs=(specAcc.value||'').split(/[\s,;]+/).filter(Boolean);
     if (!accs.length) { alert(L()['alert.specNoAcc']); return; }
     const orig=btnFetch.textContent; btnFetch.textContent=L()['btn.fetching']; btnFetch.disabled=true;
+    try { appendBg(await efetchFasta(accs)); }
+    catch (err) { alert(L()['alert.specFetchErr']+(err && err.message ? err.message : err)); }
+    finally { btnFetch.textContent=orig; btnFetch.disabled=false; }
+  });
+
+  // Autocomplete de organismo — NCBI Datasets taxon_suggest -> <datalist> (terminologia NCBI)
+  let orgTimer=null;
+  function loadOrgSuggest(q) {
+    q=(q||'').trim(); if (q.length<3 || !specOrgList) return;
+    fetch('https://api.ncbi.nlm.nih.gov/datasets/v2alpha/taxonomy/taxon_suggest/'+encodeURIComponent(q)+'?tax_rank_filter=species')
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (!j || !j.sci_name_and_ids) return;
+        const seen=new Set(); specOrgList.innerHTML='';
+        j.sci_name_and_ids.slice(0,12).forEach(s => {
+          const n=s.sci_name; if (n && !seen.has(n)) { seen.add(n); const o=document.createElement('option'); o.value=n; specOrgList.appendChild(o); }
+        });
+      }).catch(()=>{});
+  }
+  if (specOrg) specOrg.addEventListener('input', () => { clearTimeout(orgTimer); orgTimer=setTimeout(() => loadOrgSuggest(specOrg.value), 300); });
+
+  // Lista as sequências RefSeq genômicas do organismo (esearch + esummary, nuccore)
+  if (btnListGenomes) btnListGenomes.addEventListener('click', async () => {
+    const org=((specOrg && specOrg.value) || '').trim();
+    if (!org) { alert(L()['alert.specNoOrg']); return; }
+    const D=L(); const orig=btnListGenomes.textContent; btnListGenomes.textContent=D['btn.listing']; btnListGenomes.disabled=true;
     try {
-      const parts=[];
-      for (const id of accs){
-        const url=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${encodeURIComponent(id)}&rettype=fasta&retmode=text`;
-        const r=await fetch(url); if (!r.ok) throw new Error(`${id}: HTTP ${r.status}`);
-        const t=(await r.text()).trim(); if (!t.startsWith('>')) throw new Error(`${id}: ${t.slice(0,80)}`);
-        parts.push(t);
-      }
-      specBg.value=(specBg.value.trim() ? specBg.value.trim()+'\n' : '')+parts.join('\n');
-    } catch (err) {
-      alert(L()['alert.specFetchErr']+(err && err.message ? err.message : err));
-    } finally { btnFetch.textContent=orig; btnFetch.disabled=false; }
+      const term=encodeURIComponent('"'+org+'"[Organism] AND refseq[filter] AND biomol_genomic[PROP]');
+      const r=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term='+term+'&retmax=20&retmode=json');
+      const j=await r.json(); const ids=(j.esearchresult && j.esearchresult.idlist) || [];
+      specGenome.innerHTML='';
+      if (!ids.length) { const o=document.createElement('option'); o.value=''; o.textContent=D['spec.genomeNoneFound']; specGenome.appendChild(o); return; }
+      const r2=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=nuccore&id='+ids.join(',')+'&retmode=json');
+      const j2=await r2.json();
+      ids.forEach(id => {
+        const it=j2.result && j2.result[id]; if (!it) return;
+        const o=document.createElement('option'); o.value=it.accessionversion;
+        o.textContent=D['spec.genomeOpt'](it.accessionversion, it.slen, (it.title||'').slice(0,60));
+        specGenome.appendChild(o);
+      });
+    } catch (err) { alert(L()['alert.specGenomeErr']+(err && err.message ? err.message : err)); }
+    finally { btnListGenomes.textContent=orig; btnListGenomes.disabled=false; }
+  });
+
+  // Adiciona o genoma/sequência escolhido ao campo de fundo (efetch)
+  if (btnAddGenome) btnAddGenome.addEventListener('click', async () => {
+    const acc=specGenome && specGenome.value;
+    if (!acc) { alert(L()['alert.specNoGenome']); return; }
+    const orig=btnAddGenome.textContent; btnAddGenome.textContent=L()['btn.fetching']; btnAddGenome.disabled=true;
+    try { appendBg(await efetchFasta([acc])); }
+    catch (err) { alert(L()['alert.specFetchErr']+(err && err.message ? err.message : err)); }
+    finally { btnAddGenome.textContent=orig; btnAddGenome.disabled=false; }
   });
 
   if (btnScreen) btnScreen.addEventListener('click', () => {
