@@ -80,6 +80,45 @@
       'warn.hairpin':'hairpin', 'warn.selfdimer':'self-dímero', 'warn.dimer':'dímero',
       'notes.geometry': g => `Geometria (padrão Eiken/NEB): amplicon F2–B2 ${g.f2b2[0]}–${g.f2b2[1]} nt · gap F3–F2 ${g.gap[0]}–${g.gap[1]} nt · loop F2–F1 ${g.loopF2F1[0]}–${g.loopF2F1[1]} nt · centro F1–B1 ${g.f1b1[0]}–${g.f1b1[1]} nt.`,
       'res.setsOf': n => `(de ${n} candidatos válidos)`,
+      // especificidade
+      'tab.spec':'Especificidade',
+      'spec.h2':'Especificidade (triagem in silico)',
+      'spec.help':'Etapa opcional: tria os primers do conjunto melhor ranqueado (Conjunto #1) contra sequências de fundo, sinalizando primers que poderiam anelar e iniciar em organismos próximos. Usa semente 3′ exata + extensão (k-mer/alinhamento), não ML.',
+      'spec.acc.label':'Acessos NCBI (opcional)',
+      'spec.acc.ph':'Ex.: NC_043815.1, AY648786.1 (vírgula/espaço)',
+      'btn.fetchncbi':'Buscar FASTA no NCBI',
+      'spec.bg.label':'Sequências de fundo (FASTA)',
+      'spec.bg.ph':'Cole um ou mais FASTA de fundo (genomas/genes de organismos próximos)...',
+      'spec.seed.label':'Âncora 3′ exata (semente)',
+      'spec.maxmm.label':'Máx. de mismatches (primer inteiro)',
+      'btn.screen':'Triar especificidade',
+      'spec.privacy':'Privacidade: a triagem roda no seu navegador e os primers não saem da página. A rede só é acessada se você usar “Buscar FASTA no NCBI” (são enviados apenas os identificadores públicos).',
+      'spec.res.h2':'Resultado da triagem',
+      'spec.empty':'Sem triagem ainda. Gere primers (aba Entrada) e informe sequências de fundo.',
+      'btn.screening':'Triando...', 'btn.fetching':'Buscando...',
+      'alert.specNoDesign':'Gere primers primeiro (aba Entrada → Gerar primers). A triagem usa o Conjunto #1.',
+      'alert.specNoBg':'Informe ao menos uma sequência de fundo (cole o FASTA ou busque por acesso no NCBI).',
+      'alert.specNoAcc':'Digite ao menos um número de acesso (ex.: NC_043815.1).',
+      'alert.specFetchErr':'Falha ao buscar no NCBI (CORS ou rede). Baixe o FASTA manualmente no NCBI e cole no campo. Detalhe: ',
+      'spec.bgHdr': (name, len) => `Fundo: ${name} (${len} nt)`,
+      'spec.setEval': r => `Conjunto avaliado: #${r}`,
+      'spec.summary': (hit, tot) => `${hit} de ${tot} primers com possível anelamento 3′-ancorado`,
+      'spec.hit': (n, mm, pos, strand) => `⚠ ${n}: ${mm} mismatch(es), pos ${pos} (fita ${strand})`,
+      'spec.clean': n => `✓ ${n}: sem anelamento 3′-ancorado`,
+      'spec.multi':'Atenção: vários primers anelando ao mesmo fundo podem indicar risco de amplificação cruzada.',
+      'spec.note':'Um hit é o melhor alinhamento sem gaps com semente 3′ exata; indica possível anelamento, não prova amplificação.',
+      'spec.org.label':'Organismo-alvo (busca NCBI)',
+      'spec.org.ph':'Digite o nome da espécie (ex.: Babesia bigemina)',
+      'btn.listgenomes':'Listar genomas (NCBI)',
+      'spec.genome.label':'Genoma / sequência (RefSeq)',
+      'spec.genome.none':'— busque um organismo acima —',
+      'btn.addgenome':'Adicionar ao fundo',
+      'btn.listing':'Listando...',
+      'alert.specNoOrg':'Digite ou selecione um organismo (ex.: Babesia bigemina) e tente novamente.',
+      'alert.specNoGenome':'Selecione um genoma/sequência na lista (use “Listar genomas (NCBI)” primeiro).',
+      'spec.genomeNoneFound':'— nenhuma sequência RefSeq genômica encontrada; tente outro nome ou use um acesso —',
+      'spec.genomeOpt': (acc, len, title) => `${acc} · ${len} nt · ${title}`,
+      'alert.specGenomeErr':'Falha ao consultar genomas no NCBI (rede). Detalhe: ',
     },
     en: {
       'tab.input':'Input', 'tab.params':'Parameters', 'tab.results':'Results',
@@ -145,6 +184,45 @@
       'warn.hairpin':'hairpin', 'warn.selfdimer':'self-dimer', 'warn.dimer':'dimer',
       'notes.geometry': g => `Geometry (Eiken/NEB standard): F2–B2 amplicon ${g.f2b2[0]}–${g.f2b2[1]} nt · F3–F2 gap ${g.gap[0]}–${g.gap[1]} nt · F2–F1 loop ${g.loopF2F1[0]}–${g.loopF2F1[1]} nt · F1–B1 center ${g.f1b1[0]}–${g.f1b1[1]} nt.`,
       'res.setsOf': n => `(of ${n} valid candidates)`,
+      // specificity
+      'tab.spec':'Specificity',
+      'spec.h2':'Specificity (in-silico screen)',
+      'spec.help':'Optional step: screens the primers of the top-ranked set (Set #1) against background sequences, flagging primers that could anneal and prime in related organisms. Uses an exact 3′ seed + extension (k-mer/alignment), not ML.',
+      'spec.acc.label':'NCBI accessions (optional)',
+      'spec.acc.ph':'e.g., NC_043815.1, AY648786.1 (comma/space)',
+      'btn.fetchncbi':'Fetch FASTA from NCBI',
+      'spec.bg.label':'Background sequences (FASTA)',
+      'spec.bg.ph':'Paste one or more background FASTA (genomes/genes of related organisms)...',
+      'spec.seed.label':'Exact 3′ anchor (seed)',
+      'spec.maxmm.label':'Max mismatches (whole primer)',
+      'btn.screen':'Screen specificity',
+      'spec.privacy':'Privacy: the screen runs in your browser and the primers never leave the page. The network is used only if you click “Fetch FASTA from NCBI” (only the public accession IDs are sent).',
+      'spec.res.h2':'Screening result',
+      'spec.empty':'No screen yet. Generate primers (Input tab) and provide background sequences.',
+      'btn.screening':'Screening...', 'btn.fetching':'Fetching...',
+      'alert.specNoDesign':'Generate primers first (Input tab → Generate primers). The screen uses Set #1.',
+      'alert.specNoBg':'Provide at least one background sequence (paste FASTA or fetch by NCBI accession).',
+      'alert.specNoAcc':'Enter at least one accession number (e.g., NC_043815.1).',
+      'alert.specFetchErr':'NCBI fetch failed (CORS or network). Download the FASTA from NCBI manually and paste it. Detail: ',
+      'spec.bgHdr': (name, len) => `Background: ${name} (${len} nt)`,
+      'spec.setEval': r => `Set screened: #${r}`,
+      'spec.summary': (hit, tot) => `${hit} of ${tot} primers with a possible 3′-anchored anneal`,
+      'spec.hit': (n, mm, pos, strand) => `⚠ ${n}: ${mm} mismatch(es), pos ${pos} (strand ${strand})`,
+      'spec.clean': n => `✓ ${n}: no 3′-anchored anneal`,
+      'spec.multi':'Warning: several primers annealing to the same background may indicate cross-amplification risk.',
+      'spec.note':'A hit is the best gap-free alignment with an exact 3′ seed; it indicates possible annealing, not proof of amplification.',
+      'spec.org.label':'Target organism (NCBI search)',
+      'spec.org.ph':'Type the species name (e.g., Babesia bigemina)',
+      'btn.listgenomes':'List genomes (NCBI)',
+      'spec.genome.label':'Genome / sequence (RefSeq)',
+      'spec.genome.none':'— search an organism above —',
+      'btn.addgenome':'Add to background',
+      'btn.listing':'Listing...',
+      'alert.specNoOrg':'Type or select an organism (e.g., Babesia bigemina) and try again.',
+      'alert.specNoGenome':'Select a genome/sequence from the list (use "List genomes (NCBI)" first).',
+      'spec.genomeNoneFound':'— no RefSeq genomic sequence found; try another name or use an accession —',
+      'spec.genomeOpt': (acc, len, title) => `${acc} · ${len} nt · ${title}`,
+      'alert.specGenomeErr':'Failed to query genomes at NCBI (network). Detail: ',
     }
   };
   let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); return m?m[1].toLowerCase():'pt'; })();
@@ -700,6 +778,180 @@
   });
 
   // ===================================================================
+  // Especificidade — triagem in silico dos primers do Conjunto #1 contra
+  // sequências de fundo: índice de k-mers + semente 3′ exata + extensão
+  // sem gaps (modela anelamento iniciável; o 3′ deve parear para iniciar).
+  // Privado: os primers não saem do navegador; só acessos públicos (se
+  // usados) vão ao NCBI E-utilities para baixar as sequências de fundo.
+  // ===================================================================
+  const specAcc = qs('#spec-acc');
+  const specBg = qs('#spec-bg');
+  const specSeed = qs('#spec-seed');
+  const specMaxmm = qs('#spec-maxmm');
+  const btnFetch = qs('#btn-fetch-ncbi');
+  const btnScreen = qs('#btn-screen');
+  const specEmpty = qs('#spec-vazio');
+  const specList = qs('#spec-list');
+  const specOrg = qs('#spec-org');
+  const specOrgList = qs('#spec-org-list');
+  const btnListGenomes = qs('#btn-list-genomes');
+  const specGenome = qs('#spec-genome');
+  const btnAddGenome = qs('#btn-add-genome');
+  let lastSpec = null; // {rank, primers, bgs, k, maxMM} — re-render ao trocar idioma
+
+  function parseFastaMulti(text) {
+    const out=[]; let cur=null;
+    (text||'').split(/\r?\n/).forEach(line => {
+      if (line.startsWith('>')) { if (cur) out.push(cur); cur={ name:(line.slice(1).trim() || ('seq'+(out.length+1))), seq:'' }; }
+      else { const s=sanitizeDNA(line); if (cur) cur.seq+=s; else if (s) cur={ name:'seq1', seq:s }; }
+    });
+    if (cur) out.push(cur);
+    return out.filter(r => r.seq.length>0).map(r => ({ name:r.name.slice(0,60), seq:r.seq }));
+  }
+  function buildKmerIndex(bg, k) {
+    const idx=new Map();
+    for (let i=0; i+k<=bg.length; i++){ const key=bg.substr(i,k); let a=idx.get(key); if(!a){a=[];idx.set(key,a);} a.push(i); }
+    return idx;
+  }
+  function countMM(pat, bg, start, cap) {
+    const Lp=pat.length; if (start<0 || start+Lp>bg.length) return cap+1;
+    let mm=0; for (let i=0;i<Lp;i++){ if (bg[start+i]!==pat[i]){ if (++mm>cap) return mm; } }
+    return mm;
+  }
+  // melhor alinhamento sem gaps de `primer` em `bg`, exigindo semente 3′ exata (k nt)
+  function screenPrimerOnBg(primer, bg, idx, k, maxMM) {
+    const Lp=primer.length; if (Lp<k) return null;
+    let best=null;
+    const consider=(ws, pat, strand)=>{ const mm=countMM(pat,bg,ws,maxMM); if (mm<=maxMM && (!best||mm<best.mm)) best={mm, start:ws, end:ws+Lp, strand}; };
+    const occB=idx.get(primer.slice(Lp-k));      // primer ocorre em bg+ (3′ no fim do alinhamento)
+    if (occB) for (const pos of occB) consider(pos-(Lp-k), primer, '+');
+    const rc=revComp(primer);
+    const occA=idx.get(rc.slice(0,k));           // revComp(primer) em bg+ (3′ no início)
+    if (occA) for (const pos of occA) consider(pos, rc, '−');
+    return best;
+  }
+  function primersFromSet(set) {
+    const ps=[{name:'F3',seq:set.F3.seq},{name:'F2',seq:set.F2.seq},{name:'F1c',seq:set.F1c.seq},
+              {name:'B1c',seq:set.B1c.seq},{name:'B2',seq:set.B2.seq},{name:'B3',seq:set.B3.seq}];
+    if (set.LF) ps.push({name:'LF',seq:set.LF.seq});
+    if (set.LB) ps.push({name:'LB',seq:set.LB.seq});
+    return ps;
+  }
+  function renderSpec(spec) {
+    lastSpec = spec; const D=L();
+    specList.innerHTML='';
+    if (!spec || !spec.bgs.length) { specEmpty.hidden=false; specList.hidden=true; return; }
+    specEmpty.hidden=true; specList.hidden=false;
+    const head=document.createElement('div'); head.className='lw-result-card';
+    head.innerHTML=`<h4>${D['spec.setEval'](spec.rank)}</h4><p class="lw-help">${D['spec.note']}</p>`;
+    specList.appendChild(head);
+    const minLen=Math.min.apply(null, spec.primers.map(p=>p.seq.length));
+    const k=Math.max(8, Math.min(spec.k, minLen));
+    spec.bgs.forEach(bg => {
+      const idx=buildKmerIndex(bg.seq, k);
+      let hits=0; const rows=[];
+      spec.primers.forEach(p => {
+        const m=screenPrimerOnBg(p.seq, bg.seq, idx, k, spec.maxMM);
+        if (m){ hits++; rows.push(`<p class="lw-help" style="margin:2px 0; color:var(--warn);">${D['spec.hit'](`${p.name} (5'-${p.seq}-3')`, m.mm, `${m.start+1}–${m.end}`, m.strand)}</p>`); }
+        else rows.push(`<p class="lw-help" style="margin:2px 0; color:var(--ok);">${D['spec.clean'](p.name)}</p>`);
+      });
+      const card=document.createElement('div'); card.className='lw-result-card';
+      card.innerHTML=`<h4>${D['spec.bgHdr'](bg.name, bg.seq.length)}</h4>`+
+        `<p class="lw-help">${D['spec.summary'](hits, spec.primers.length)}</p>`+
+        rows.join('')+
+        (hits>=2 ? `<p class="lw-help" style="color:var(--warn);">${D['spec.multi']}</p>` : '');
+      specList.appendChild(card);
+    });
+  }
+
+  // E-utilities: baixa o FASTA (nuccore) de uma lista de acessos
+  async function efetchFasta(ids) {
+    const parts=[];
+    for (const id of ids){
+      const url=`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=${encodeURIComponent(id)}&rettype=fasta&retmode=text`;
+      const r=await fetch(url); if (!r.ok) throw new Error(`${id}: HTTP ${r.status}`);
+      const t=(await r.text()).trim(); if (!t.startsWith('>')) throw new Error(`${id}: ${t.slice(0,80)}`);
+      parts.push(t);
+    }
+    return parts.join('\n');
+  }
+  function appendBg(text) { specBg.value=(specBg.value.trim() ? specBg.value.trim()+'\n' : '')+text; }
+
+  if (btnFetch) btnFetch.addEventListener('click', async () => {
+    const accs=(specAcc.value||'').split(/[\s,;]+/).filter(Boolean);
+    if (!accs.length) { alert(L()['alert.specNoAcc']); return; }
+    const orig=btnFetch.textContent; btnFetch.textContent=L()['btn.fetching']; btnFetch.disabled=true;
+    try { appendBg(await efetchFasta(accs)); }
+    catch (err) { alert(L()['alert.specFetchErr']+(err && err.message ? err.message : err)); }
+    finally { btnFetch.textContent=orig; btnFetch.disabled=false; }
+  });
+
+  // Autocomplete de organismo — NCBI Datasets taxon_suggest -> <datalist> (terminologia NCBI)
+  let orgTimer=null;
+  function loadOrgSuggest(q) {
+    q=(q||'').trim(); if (q.length<3 || !specOrgList) return;
+    fetch('https://api.ncbi.nlm.nih.gov/datasets/v2alpha/taxonomy/taxon_suggest/'+encodeURIComponent(q)+'?tax_rank_filter=species')
+      .then(r => r.ok ? r.json() : null)
+      .then(j => {
+        if (!j || !j.sci_name_and_ids) return;
+        const seen=new Set(); specOrgList.innerHTML='';
+        j.sci_name_and_ids.slice(0,12).forEach(s => {
+          const n=s.sci_name; if (n && !seen.has(n)) { seen.add(n); const o=document.createElement('option'); o.value=n; specOrgList.appendChild(o); }
+        });
+      }).catch(()=>{});
+  }
+  if (specOrg) specOrg.addEventListener('input', () => { clearTimeout(orgTimer); orgTimer=setTimeout(() => loadOrgSuggest(specOrg.value), 300); });
+
+  // Lista as sequências RefSeq genômicas do organismo (esearch + esummary, nuccore)
+  if (btnListGenomes) btnListGenomes.addEventListener('click', async () => {
+    const org=((specOrg && specOrg.value) || '').trim();
+    if (!org) { alert(L()['alert.specNoOrg']); return; }
+    const D=L(); const orig=btnListGenomes.textContent; btnListGenomes.textContent=D['btn.listing']; btnListGenomes.disabled=true;
+    try {
+      const term=encodeURIComponent('"'+org+'"[Organism] AND refseq[filter] AND biomol_genomic[PROP]');
+      const r=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term='+term+'&retmax=20&retmode=json');
+      const j=await r.json(); const ids=(j.esearchresult && j.esearchresult.idlist) || [];
+      specGenome.innerHTML='';
+      if (!ids.length) { const o=document.createElement('option'); o.value=''; o.textContent=D['spec.genomeNoneFound']; specGenome.appendChild(o); return; }
+      const r2=await fetch('https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=nuccore&id='+ids.join(',')+'&retmode=json');
+      const j2=await r2.json();
+      ids.forEach(id => {
+        const it=j2.result && j2.result[id]; if (!it) return;
+        const o=document.createElement('option'); o.value=it.accessionversion;
+        o.textContent=D['spec.genomeOpt'](it.accessionversion, it.slen, (it.title||'').slice(0,60));
+        specGenome.appendChild(o);
+      });
+    } catch (err) { alert(L()['alert.specGenomeErr']+(err && err.message ? err.message : err)); }
+    finally { btnListGenomes.textContent=orig; btnListGenomes.disabled=false; }
+  });
+
+  // Adiciona o genoma/sequência escolhido ao campo de fundo (efetch)
+  if (btnAddGenome) btnAddGenome.addEventListener('click', async () => {
+    const acc=specGenome && specGenome.value;
+    if (!acc) { alert(L()['alert.specNoGenome']); return; }
+    const orig=btnAddGenome.textContent; btnAddGenome.textContent=L()['btn.fetching']; btnAddGenome.disabled=true;
+    try { appendBg(await efetchFasta([acc])); }
+    catch (err) { alert(L()['alert.specFetchErr']+(err && err.message ? err.message : err)); }
+    finally { btnAddGenome.textContent=orig; btnAddGenome.disabled=false; }
+  });
+
+  if (btnScreen) btnScreen.addEventListener('click', () => {
+    if (!lastData || !lastData.sets || !lastData.sets.length) { alert(L()['alert.specNoDesign']); return; }
+    const bgs=parseFastaMulti(specBg.value);
+    if (!bgs.length) { alert(L()['alert.specNoBg']); return; }
+    const k=Math.max(8, Math.min(20, parseInt((specSeed && specSeed.value) || 13, 10) || 13));
+    const maxMM=Math.max(0, Math.min(6, parseInt((specMaxmm && specMaxmm.value) || 2, 10) || 0));
+    const set=lastData.sets[0];
+    const primers=primersFromSet(set);
+    const orig=btnScreen.textContent; btnScreen.textContent=L()['btn.screening']; btnScreen.disabled=true;
+    setTimeout(() => {
+      try { renderSpec({ rank:set.rank||1, primers, bgs, k, maxMM }); }
+      catch (err) { console.error('spec error', err); alert(L()['alert.designErr']+(err && err.message ? err.message : err)); }
+      finally { btnScreen.textContent=orig; btnScreen.disabled=false; }
+    }, 30);
+  });
+
+  // ===================================================================
   // i18n — aplicação no DOM + botão de idioma
   // ===================================================================
   function applyLang(lang) {
@@ -716,6 +968,7 @@
     if (btnAplicar) btnAplicar.textContent = D['btn.apply'];
     // re-renderiza resultados em cache no novo idioma
     if (lastData) renderResults(lastData);
+    if (lastSpec) renderSpec(lastSpec);
   }
 
   const btnLang = qs('#langToggle');

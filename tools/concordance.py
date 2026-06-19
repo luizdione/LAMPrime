@@ -56,7 +56,9 @@ def split_bip(target, bip):
 
 def report(name, target, P):
     print(f"\n===== {name}  (alvo {len(target)} nt) =====")
-    f1c,f2=split_fip(target, P['FIP']); b1c,b2=split_bip(target, P['BIP'])
+    # componentes explicitos (F1c/F2/B1c/B2) tem prioridade; senao, split heuristico do FIP/BIP
+    f1c,f2 = (P['F1c'],P['F2']) if P.get('F1c') and P.get('F2') else split_fip(target, P['FIP'])
+    b1c,b2 = (P['B1c'],P['B2']) if P.get('B1c') and P.get('B2') else split_bip(target, P['BIP'])
     comps=[('F3',P['F3']),('F2',f2),('F1c',f1c),('B1c',b1c),('B2',b2),('B3',P['B3'])]
     if P.get('LF'): comps.append(('LF',P['LF']))
     if P.get('LB'): comps.append(('LB',P['LB']))
@@ -111,6 +113,21 @@ amarginale_msp1b={'F3':'GCACTACCGTTCATGGATGA','B3':'TCCCCTGTGATATCTGTGCC',
  'BIP':'AGCAGGCTTCAAGCGTACAGTTCCGCGAGCATGTGCA',
  'LF':'TCACCCGCTGGTACTTCAA','LB':'GCCTGGAGATGTTAGACCGA'}
 
+# M. tuberculosis: IS6110 (Iken 2016, BMC Infect Dis 16:521). Alvo GenBank X17348.1.
+def _fetch_mtb():
+    url='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=X17348.1&rettype=fasta&retmode=text'
+    raw=urllib.request.urlopen(url, timeout=30).read().decode()
+    seq=''.join(l.strip() for l in raw.splitlines() if not l.startswith('>'))
+    return ''.join(c for c in seq.upper() if c in 'ATGCN')
+mtb=load_fasta('mtb_is6110_X17348.fasta', fetch=_fetch_mtb)
+if mtb: print('IS6110:', len(mtb), 'nt')
+mtb_is6110={'F3':'TCTCGTCCAGCGCCGCTT','B3':'GCGGGTCCAGATGGCTTG',
+ 'FIP':'ACGTAGGCGAACCCTGCCCCCAGCACCTAACCGGCTG',
+ 'BIP':'GTCACCGACGCCTACGCTCTCGCGTCGAGGACCATGG',
+ 'F1c':'ACGTAGGCGAACCCTGCCC','F2':'CCAGCACCTAACCGGCTG',
+ 'B1c':'GTCACCGACGCCTACGCTC','B2':'TCGCGTCGAGGACCATGG',
+ 'LF':'TCGACACATAGGTGAGGTC','LB':'TCGCTTCCACGATGGCCA'}
+
 # ---- estruturas secundarias (hairpin/homo/heterodimero) @63C, modelo do LAMPrime ----
 TREACT=63+273.15
 def segdg(seg):
@@ -162,3 +179,6 @@ struct('A. marginale msp1b', amarginale_msp1b)
 if sgene:
     report('SARS-CoV-2 gene S (Prakash 2023, MethodsX)', sgene, sarscov2)
     struct('SARS-CoV-2 gene S', sarscov2)
+if mtb:
+    report('M. tuberculosis IS6110 (Iken 2016, BMC Infect Dis) - alvo GenBank X17348.1', mtb, mtb_is6110)
+    struct('M. tuberculosis IS6110', mtb_is6110)
