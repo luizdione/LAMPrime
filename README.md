@@ -76,9 +76,11 @@ python tools/concordance.py
 Published sets re-scored: *Anaplasma marginale* msp1b (Giglioti et al., 2019;
 synthetic target from GenBank M59845.1), SARS-CoV-2 spike (Prakash et al., 2023;
 spike CDS of NC_045512.2) and *Mycobacterium tuberculosis* IS6110 (Bentaleb et al.,
-2016; GenBank X17348.1). All targets are read offline from the committed FASTA
-files in `tools/data/` (which also include the *Babesia bovis* 18S rRNA and
-cytochrome b design targets), so the script is fully deterministic; a sequence is
+2016; GenBank X17348.1). All sequences are read offline from `tools/data/`, which
+holds the complete set of target sequences — the five design targets
+(*A. marginale* msp1b; *B. bovis* 18S rRNA and cytochrome b; *M. tuberculosis*
+IS6110; SARS-CoV-2 nucleocapsid N, NC_045512.2:28274–28720) and the SARS-CoV-2
+spike concordance target — so the script is fully deterministic; a sequence is
 fetched from NCBI only if its local file is missing.
 
 ## License
