@@ -225,7 +225,7 @@
       'alert.specGenomeErr':'Failed to query genomes at NCBI (network). Detail: ',
     }
   };
-  let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); return m?m[1].toLowerCase():'pt'; })();
+  let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); if(m) return m[1].toLowerCase(); const hl=(document.documentElement.getAttribute('lang')||'').toLowerCase(); if(hl.indexOf('en')===0) return 'en'; if(hl.indexOf('pt')===0) return 'pt'; try{ const s=localStorage.getItem('lamprime_lang'); if(s==='en'||s==='pt') return s; }catch(e){} return 'pt'; })();
   const L = () => I18N[LANG] || I18N.pt;
 
   // Tabs
@@ -971,15 +971,7 @@
     if (lastSpec) renderSpec(lastSpec);
   }
 
-  const btnLang = qs('#langToggle');
-  if (btnLang) {
-    btnLang.addEventListener('click', () => {
-      const next = (LANG === 'en') ? 'pt' : 'en';
-      const params = new URLSearchParams(location.search);
-      params.set('lang', next);
-      history.replaceState(null, '', location.pathname + '?' + params.toString());
-      applyLang(next);
-    });
-  }
+  // O botão de idioma é um LINK NATIVO entre LAMPrime.html (PT) e LAMPrime_en.html (EN);
+  // não há listener de toggle. O idioma de cada página vem do <html lang>.
   applyLang(LANG);
 })();
