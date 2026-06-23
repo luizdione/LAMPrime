@@ -28,6 +28,17 @@ Data provenance: reference genome SARS-CoV-2 NC_045512.2 (spike CDS 21563–2538
 fetched at run time from NCBI E-utilities; primers as reported by Prakash et al.,
 *MethodsX* 10 (2023) 102011, https://doi.org/10.1016/j.mex.2023.102011.
 
+## Table C — *Mycobacterium tuberculosis* IS6110
+
+Same columns as Tables A and B, for the published IS6110 LAMP set mapped onto
+the IS6110 insertion sequence.
+
+Data provenance: target = GenBank X17348.1 (IS6110 element), fetched from NCBI
+E-utilities if `tools/data/mtb_is6110_X17348.fasta` is absent; primers as
+reported by Bentaleb et al., *BMC Infectious Diseases* 16 (2016) 517,
+https://doi.org/10.1186/s12879-016-1848-1. Explicit F1c/F2/B1c/B2 component
+sequences are provided in the primer dictionary (no heuristic split required).
+
 > Note: a component is reported as "NAO ACHADO" when the published primer differs
 > from the reference deposit (e.g. a single-nucleotide variant), which reflects
 > primer–target identity, not the design model.

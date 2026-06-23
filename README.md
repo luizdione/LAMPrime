@@ -65,10 +65,19 @@ secondary-structure summary at 63 °C.
 python tools/concordance.py
 ```
 
-Targets: *Anaplasma marginale* msp1b (Giglioti et al., 2018; synthetic gBlocks
-target from GenBank M59845.1) and SARS-CoV-2 spike (Prakash et al., 2023; spike
-CDS) — both targets are read offline from committed FASTA files in `tools/data/`, so the script is fully deterministic; the spike CDS is fetched from NCBI NC_045512.2 only if its file is missing. These are the reference
-validation targets used in this work.
+Targets (three published, experimentally validated LAMP primer sets):
+
+- *Anaplasma marginale* msp1b — Giglioti et al. (2018); synthetic gBlocks target
+  from GenBank M59845.1; FASTA read offline from `tools/data/`.
+- SARS-CoV-2 spike (S gene) — Prakash et al. (2023); CDS NC_045512.2
+  positions 21563–25384; FASTA read offline from `tools/data/`; fetched from
+  NCBI E-utilities only if the file is absent.
+- *Mycobacterium tuberculosis* IS6110 — Bentaleb et al. (2016), *BMC Infect Dis*
+  16:517; target GenBank X17348.1; fetched from NCBI E-utilities if absent from
+  `tools/data/`.
+
+All three targets are offline-deterministic when their FASTA files are present in
+`tools/data/`. These are the reference validation targets used in this work.
 
 ## License
 
