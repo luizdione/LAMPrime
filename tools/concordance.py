@@ -76,7 +76,8 @@ def report(name, target, P):
         print(f"  amplicon F3-B3 = {b-a+1} nt")
 
 # ---- alvos de validacao (usados em report()/struct() abaixo) ----
-# A. marginale: msp1b (Giglioti 2018); SARS-CoV-2: gene S (Prakash 2023).
+# A. marginale: msp1b (Giglioti 2018); SARS-CoV-2: gene S (Prakash 2023);
+# M. tuberculosis: IS6110 (Bentaleb et al. 2016).
 # (O ensaio de msp5 NAO e usado para concordancia — primers de isolado divergente — removido.)
 
 # Sequencias-alvo lidas de data/ (offline, deterministico). Fetch via rede so se faltar.
@@ -96,12 +97,20 @@ def _fetch_sgene():
     raw=urllib.request.urlopen(url, timeout=30).read().decode()
     seq=''.join(l.strip() for l in raw.splitlines() if not l.startswith('>'))
     return ''.join(c for c in seq.upper() if c in 'ATGCN')
+def _fetch_mtb():
+    url='https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=X17348.1&rettype=fasta&retmode=text'
+    raw=urllib.request.urlopen(url, timeout=30).read().decode()
+    seq=''.join(l.strip() for l in raw.splitlines() if not l.startswith('>'))
+    return ''.join(c for c in seq.upper() if c in 'ATGCN')
 
 # A. marginale msp1b: alvo sintetico (gBlocks) de Giglioti 2018 (base GenBank M59845.1).
 # SARS-CoV-2 gene S: CDS de NC_045512.2 (21563-25384), Prakash 2023.
+# M. tuberculosis IS6110: alvo GenBank X17348.1, Bentaleb et al. 2016 (BMC Infect Dis 16:517).
 msp1b=load_fasta('amarginale_msp1b_synthetic.fasta')
 sgene=load_fasta('sarscov2_spike_NC045512.2_21563-25384.fasta', fetch=_fetch_sgene)
 if sgene: print('S gene:', len(sgene), 'nt')
+mtb=load_fasta('mtb_is6110_X17348.fasta', fetch=_fetch_mtb)
+if mtb: print('IS6110:', len(mtb), 'nt')
 
 sarscov2={'F3':'TGGTGATATTGCTGCTAGA','B3':'GCACTATTAAATTGGTGGGC',
  'FIP':'AGGTCCAACCAGAAGTGATTCACCTTTGCTCACAGATG','BIP':'GCAGGTGCTGCATTACAATCTGTGTAACTCCAATACCA',
@@ -110,6 +119,12 @@ amarginale_msp1b={'F3':'GCACTACCGTTCATGGATGA','B3':'TCCCCTGTGATATCTGTGCC',
  'FIP':'TGCCTTGCCAAATTCTTGCTCCCACCTGACACTGGTGAGAAG',
  'BIP':'AGCAGGCTTCAAGCGTACAGTTCCGCGAGCATGTGCA',
  'LF':'TCACCCGCTGGTACTTCAA','LB':'GCCTGGAGATGTTAGACCGA'}
+mtb_is6110={'F3':'TCTCGTCCAGCGCCGCTT','B3':'GCGGGTCCAGATGGCTTG',
+ 'FIP':'ACGTAGGCGAACCCTGCCCCCAGCACCTAACCGGCTG',
+ 'BIP':'GTCACCGACGCCTACGCTCTCGCGTCGAGGACCATGG',
+ 'F1c':'ACGTAGGCGAACCCTGCCC','F2':'CCAGCACCTAACCGGCTG',
+ 'B1c':'GTCACCGACGCCTACGCTC','B2':'TCGCGTCGAGGACCATGG',
+ 'LF':'TCGACACATAGGTGAGGTC','LB':'TCGCTTCCACGATGGCCA'}
 
 # ---- estruturas secundarias (hairpin/homo/heterodimero) @63C, modelo do LAMPrime ----
 TREACT=63+273.15
@@ -162,3 +177,6 @@ struct('A. marginale msp1b', amarginale_msp1b)
 if sgene:
     report('SARS-CoV-2 gene S (Prakash 2023, MethodsX)', sgene, sarscov2)
     struct('SARS-CoV-2 gene S', sarscov2)
+if mtb:
+    report('M. tuberculosis IS6110 (Bentaleb et al. 2016, BMC Infect Dis) - alvo GenBank X17348.1', mtb, mtb_is6110)
+    struct('M. tuberculosis IS6110', mtb_is6110)
