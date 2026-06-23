@@ -86,6 +86,8 @@
       'spec.help':'Etapa opcional: tria os primers do conjunto melhor ranqueado (Conjunto #1) contra sequências de fundo, sinalizando primers que poderiam anelar e iniciar em organismos próximos. Usa semente 3′ exata + extensão (k-mer/alinhamento), não ML.',
       'spec.acc.label':'Acessos NCBI (opcional)',
       'spec.acc.ph':'Ex.: NC_043815.1, AY648786.1 (vírgula/espaço)',
+      'spec.examples':'Exemplos de reatividade cruzada:',
+      'spec.examplesHelp':'Preenche o acesso NCBI do organismo congenérico; gere primers, busque o FASTA e clique em Triar.',
       'btn.fetchncbi':'Buscar FASTA no NCBI',
       'spec.bg.label':'Sequências de fundo (FASTA)',
       'spec.bg.ph':'Cole um ou mais FASTA de fundo (genomas/genes de organismos próximos)...',
@@ -190,6 +192,8 @@
       'spec.help':'Optional step: screens the primers of the top-ranked set (Set #1) against background sequences, flagging primers that could anneal and prime in related organisms. Uses an exact 3′ seed + extension (k-mer/alignment), not ML.',
       'spec.acc.label':'NCBI accessions (optional)',
       'spec.acc.ph':'e.g., NC_043815.1, AY648786.1 (comma/space)',
+      'spec.examples':'Cross-reactivity examples:',
+      'spec.examplesHelp':'Fills the congeneric organism\'s NCBI accession; generate primers, fetch the FASTA, then Screen.',
       'btn.fetchncbi':'Fetch FASTA from NCBI',
       'spec.bg.label':'Background sequences (FASTA)',
       'spec.bg.ph':'Paste one or more background FASTA (genomes/genes of related organisms)...',
@@ -950,6 +954,20 @@
       finally { btnScreen.textContent=orig; btnScreen.disabled=false; }
     }, 30);
   });
+
+  // Presets de exemplo (reatividade cruzada): só preenchem os campos;
+  // o usuário ainda clica em "Buscar FASTA no NCBI" e depois "Triar".
+  function fillSpecExample(acc, seed, maxmm) {
+    if (specAcc) specAcc.value = acc;
+    if (specSeed) specSeed.value = seed;
+    if (specMaxmm) specMaxmm.value = maxmm;
+  }
+  (function () {
+    const elA = document.getElementById('specEgAcentrale');
+    if (elA) elA.addEventListener('click', () => fillSpecExample('CP001759.1', 13, 2));
+    const elB = document.getElementById('specEgBbigemina');
+    if (elB) elB.addEventListener('click', () => fillSpecExample('KP710228.1', 13, 2));
+  })();
 
   // ===================================================================
   // i18n — aplicação no DOM + botão de idioma

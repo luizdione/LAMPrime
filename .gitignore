@@ -10,10 +10,14 @@
 !/.gitignore
 !/LICENSE
 !/README.md
+!/CHANGELOG.md
 !/app.js
 !/index.html
+!/LAMPrime.html
+!/LAMPrime_en.html
 !/styles.css
 !/pcr-lamp.jpg
+!/fig2_lamp_architecture.png
 !/tools/
 
 # 3) artefatos transitórios
