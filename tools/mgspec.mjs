@@ -99,8 +99,59 @@ function bestOffWindow(primer, bgSeqs){
   return best;
 }
 
+// ---- Mg sweep + suggestion (verbatim mirror of app.js computeMgSweep) ----
+// Per cell we keep S=Tm_on−Tm_off (intrinsic discrimination, ~Mg-invariant) AND
+// safety=T_rxn−Tm_off (off-target safety margin, Mg-DEPENDENT). "functional" =
+// Tm_on inside the role-based LAMP window. Suggested column = lowest total-Mg
+// column where every primer is functional AND safe (safety>0); else the column
+// maximizing the count of functional&safe primers, lowest Mg on ties.
+const inRange=(x,lo,hi)=>x>=lo&&x<=hi;
+function lampTmWindow(name){
+  if (/^(F3|B3|F2|B2)$/.test(name)) return [59,61];
+  if (/^(F1c|B1c|LF|LB)$/.test(name)) return [64,66];
+  return [59,66];
+}
+function computeMgSweep(primers, bgs, opt){
+  const mgMin=opt.mgMin, mgMax=opt.mgMax, mgStep=opt.mgStep>0?opt.mgStep:0.5;
+  const cols=[]; for (let mg=mgMin; mg<=mgMax+1e-9; mg+=mgStep) cols.push(Math.round(mg*1000)/1000);
+  const offs = primers.map(p => bestOffWindow(p.seq, bgs));
+  const rows = primers.map((p,i)=>{
+    const win=lampTmWindow(p.name);
+    const cells = cols.map(mg=>{
+      const o={ mg, dntp:opt.dntp, mon:opt.mon, oligoNM:TM_OLIGO_NM };
+      const on = tmDuplexMg(p.seq, wcBottom(p.seq), o);
+      let off={tm:NaN, flag:true};
+      if (offs[i]) off = tmDuplexMg(p.seq, offs[i].alignedTargetBottom, o);
+      const S = (isNaN(on.tm)||isNaN(off.tm)) ? NaN : (on.tm - off.tm);
+      const safety = isNaN(off.tm) ? Infinity : (opt.tRxn - off.tm);
+      const functional = !isNaN(on.tm) && inRange(on.tm, win[0], win[1]);
+      const safe = safety > 0;
+      const valid = functional && safe;
+      const freeMg = freeMgM(mg/1000, opt.dntp/1000);
+      return { mg, freeMg, tmOn:on.tm, tmOff:off.tm, S, safety, functional, safe, valid };
+    });
+    return { name:p.name, seq:p.seq, off:offs[i], cells };
+  });
+  const colStats = cols.map((mg,j)=>{
+    let minSafety=Infinity, minS=Infinity, allPass=true, nPass=0;
+    rows.forEach(r=>{
+      const c=r.cells[j];
+      if (!isNaN(c.S)) minS=Math.min(minS,c.S);
+      if (isFinite(c.safety)) minSafety=Math.min(minSafety,c.safety);
+      if (c.functional && c.safe) nPass++; else allPass=false;
+    });
+    if (!isFinite(minS)) minS=NaN;
+    if (!isFinite(minSafety)) minSafety=NaN;
+    return { mg, freeMg:freeMgM(mg/1000, opt.dntp/1000), minS, minSafety, feasible:allPass, nPass, nValid:nPass };
+  });
+  let jStar=-1;
+  for (let j=0;j<colStats.length;j++){ if (colStats[j].feasible){ jStar=j; break; } }
+  if (jStar<0){ let bestN=-1; colStats.forEach((c,j)=>{ if (c.nPass>bestN){ bestN=c.nPass; jStar=j; } }); }
+  return { cols, rows, colStats, jStar, feasible: jStar>=0 && colStats[jStar].feasible, opt };
+}
+
 // ---- ESM exports (single reproducible math source; importing does NOT run the self-test) ----
-export { freeMgM, owczarzy2008, tmDuplexMg, bestOffWindow, wcBottom, revComp, comp, NN_DH, NN_DS, MM_IMM, R_GAS, TM_OLIGO_NM };
+export { freeMgM, owczarzy2008, tmDuplexMg, bestOffWindow, computeMgSweep, lampTmWindow, wcBottom, revComp, comp, NN_DH, NN_DS, MM_IMM, R_GAS, TM_OLIGO_NM };
 
 // Run the self-test only when invoked directly (node tools/mgspec.mjs), not on import.
 import { fileURLToPath as _f } from 'node:url';
@@ -136,6 +187,34 @@ assert(tmOn8 > tmOff8 + 1, 'perfect-match Tm exceeds single-mismatch Tm by >1 C'
 assert(tmOn8 > tmOn2, 'raising total Mg2+ (2->8 mM) raises Tm');
 assert(freeMgM(0.008,0.0016) < 0.008, 'free Mg2+ < total Mg2+ when dNTP present');
 assert(Math.abs(freeMgM(0.008,0.0) - 0.008) < 1e-9, 'free Mg2+ == total when no dNTP');
+
+// ---- Mg sweep: safety metric (T_rxn − Tm_off) and suggestion (lowest functional&safe Mg) ----
+// One synthetic primer (the on-target) vs a near-identical background (the off-target).
+const swTop = 'GTCAGTTACCGTAGCATTCGAT';
+const bgFasta = [{ name:'bg', seq: swTop.slice(0,10) + (swTop[10]==='A'?'G':'A') + swTop.slice(11) }]; // 1-mm window present
+const swPrimers = [{ name:'F3', seq: swTop }];
+const Trxn = 63;
+const sw = computeMgSweep(swPrimers, bgFasta, { dntp:1.6, mon:50, tRxn:Trxn, mgMin:2, mgMax:10, mgStep:0.5 });
+
+// safety must equal T_rxn − Tm_off exactly in every cell where Tm_off is finite
+let safetyOK=true;
+sw.rows[0].cells.forEach(c=>{ if (Number.isFinite(c.tmOff) && Math.abs(c.safety-(Trxn-c.tmOff))>1e-9) safetyOK=false; });
+assert(safetyOK, 'safety(i,j) == T_rxn − Tm_off in every cell');
+
+// safety is Mg-DEPENDENT: Tm_off rises with Mg ⇒ safety strictly decreases (first vs last col)
+const cFirst=sw.rows[0].cells[0], cLast=sw.rows[0].cells[sw.cols.length-1];
+assert(cLast.safety < cFirst.safety - 1e-6, 'safety decreases as total Mg2+ rises (Mg-dependent)');
+
+// S (intrinsic discrimination) is ~Mg-invariant: |S_first − S_last| small vs safety swing
+assert(Math.abs(cLast.S - cFirst.S) < Math.abs(cFirst.safety - cLast.safety), 'S is far more Mg-invariant than safety');
+
+// suggested column is the LOWEST Mg that is functional AND safe (if feasible at all)
+if (sw.feasible){
+  const js=sw.jStar;
+  assert(sw.colStats[js].feasible, 'suggested column is functional AND safe');
+  let firstFeas=-1; for (let j=0;j<sw.colStats.length;j++){ if (sw.colStats[j].feasible){ firstFeas=j; break; } }
+  assert(js===firstFeas, 'suggested column is the LOWEST functional&safe Mg column');
+}
 
 if (process.exitCode) console.error('\nVALIDATION FAILED'); else console.log('\nALL CHECKS PASSED');
 } // end runSelfTest

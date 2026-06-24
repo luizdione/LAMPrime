@@ -123,7 +123,7 @@
       'alert.specGenomeErr':'Falha ao consultar genomas no NCBI (rede). Detalhe: ',
       // varredura de Mg²⁺ → heatmap
       'spec.mg.h3':'Varredura de Mg²⁺ → heatmap',
-      'spec.mg.help':'Varre o MgSO₄ total e calcula, para cada primer do Conjunto #1, a margem de Tm on-target − off-target (Tm pareada vs. melhor janela no fundo). Caminho de Tm independente: Mg livre por quelação do dNTP + correção divalente (Owczarzy 2008) e NN de mismatch interno (Allawi/Peyret). Sugere o [Mg²⁺] de trabalho por maximin.',
+      'spec.mg.help':'Varre o MgSO₄ total e calcula, para cada primer do Conjunto #1, o Tm pareado (on-target) e o Tm do off-target (melhor janela no fundo). Caminho de Tm independente: Mg livre por quelação do dNTP + correção divalente (Owczarzy 2008) e NN de mismatch interno (Allawi/Peyret). O heatmap colore pela margem de segurança do off-target (T_reação − Tm_off, °C) e sugere o menor [Mg²⁺] que mantém todos os primers funcionais e seguros.',
       'spec.mg.dntp.label':'dNTP total (mM)',
       'spec.mg.mon.label':'Monovalente Na⁺/K⁺ (mM)',
       'spec.mg.trxn.label':'Temperatura de reação (°C)',
@@ -133,11 +133,16 @@
       'spec.mg.run':'Varredura Mg²⁺ → heatmap',
       'spec.mg.primer':'Primer',
       'spec.mg.valid':'Válido',
-      'spec.mg.suggest': (tot, free, minS) => `Mg²⁺ sugerido: ${tot} mM total (~${free} mM livre) · margem mínima S = ${minS} °C (todos os primers válidos).`,
-      'spec.mg.noFeas': (tot, free) => `Nenhuma coluna de Mg²⁺ deixou todos os primers válidos. Melhor coluna: ${tot} mM total (~${free} mM livre), maximizando primers válidos.`,
+      'spec.mg.safety':'segurança (T_reação − Tm_off)',
+      'spec.mg.status':'status',
+      'spec.mg.notFunc':'não-funcional',
+      'spec.mg.notSafe':'risco off-target',
+      'spec.mg.suggest': (tot, free, minSafety) => `Mg²⁺ sugerido: ${tot} mM total (~${free} mM livre) · margem de segurança mínima do off-target = ${minSafety} °C (todos os primers funcionais e seguros).`,
+      'spec.mg.noFeas': (tot, free) => `Nenhuma coluna de Mg²⁺ deixou todos os primers funcionais e seguros. Melhor coluna: ${tot} mM total (~${free} mM livre), maximizando primers funcionais e seguros.`,
       'spec.mg.none':'Sem resultado de varredura. Carregue um fundo e gere primers primeiro.',
-      'spec.mg.offenders': names => `Primers fora da faixa nesta coluna: ${names}.`,
-      'spec.mg.note':'S = Tm_on − Tm_off (°C). Verde = on-target favorecido; vermelho = risco de off-target; cinza = inválido (Tm_on fora da janela LAMP ou Tm_off ≥ T de reação). Caixa azul = Mg²⁺ sugerido.',
+      'spec.mg.offenders': names => `Primers funcionais/seguros falhando nesta coluna: ${names}.`,
+      'spec.mg.note':'Cor = margem de segurança do off-target (T_reação − Tm_off, °C). Verde = off-target derrete abaixo da T de reação (seguro, maior = mais seguro); vermelho = Tm_off ≥ T de reação (risco de pareamento do off-target); cinza = não-funcional (Tm_on fora da janela LAMP). Anotação da célula = Tm_off absoluto (°C). Caixa azul = Mg²⁺ sugerido.',
+      'spec.mg.note2':'Mg desloca o Tm absoluto (rendimento e o Tm do off-target), não a margem de discriminação S; a especificidade é governada pela divergência da sequência.',
     },
     en: {
       'tab.input':'Input', 'tab.params':'Parameters', 'tab.results':'Results',
@@ -246,7 +251,7 @@
       'alert.specGenomeErr':'Failed to query genomes at NCBI (network). Detail: ',
       // Mg²⁺ sweep → heatmap
       'spec.mg.h3':'Mg²⁺ sweep → heatmap',
-      'spec.mg.help':'Sweeps total MgSO₄ and computes, for each primer of Set #1, the on-target − off-target Tm margin (duplex Tm vs. best window in the background). Independent Tm path: free Mg from dNTP chelation + divalent correction (Owczarzy 2008) and internal-mismatch NN (Allawi/Peyret). Suggests the working [Mg²⁺] by maximin.',
+      'spec.mg.help':'Sweeps total MgSO₄ and computes, for each primer of Set #1, the on-target (matched) Tm and the off-target Tm (best window in the background). Independent Tm path: free Mg from dNTP chelation + divalent correction (Owczarzy 2008) and internal-mismatch NN (Allawi/Peyret). The heatmap colors by the off-target safety margin (T_rxn − Tm_off, °C) and suggests the lowest [Mg²⁺] that keeps every primer functional and safe.',
       'spec.mg.dntp.label':'Total dNTP (mM)',
       'spec.mg.mon.label':'Monovalent Na⁺/K⁺ (mM)',
       'spec.mg.trxn.label':'Reaction temperature (°C)',
@@ -256,11 +261,16 @@
       'spec.mg.run':'Mg²⁺ sweep → heatmap',
       'spec.mg.primer':'Primer',
       'spec.mg.valid':'Valid',
-      'spec.mg.suggest': (tot, free, minS) => `Suggested Mg²⁺: ${tot} mM total (~${free} mM free) · minimum margin S = ${minS} °C (all primers valid).`,
-      'spec.mg.noFeas': (tot, free) => `No Mg²⁺ column kept all primers valid. Best column: ${tot} mM total (~${free} mM free), maximizing valid primers.`,
+      'spec.mg.safety':'safety (T_rxn − Tm_off)',
+      'spec.mg.status':'status',
+      'spec.mg.notFunc':'non-functional',
+      'spec.mg.notSafe':'off-target risk',
+      'spec.mg.suggest': (tot, free, minSafety) => `Suggested Mg²⁺: ${tot} mM total (~${free} mM free) · minimum off-target safety margin = ${minSafety} °C (all primers functional and safe).`,
+      'spec.mg.noFeas': (tot, free) => `No Mg²⁺ column kept all primers functional and safe. Best column: ${tot} mM total (~${free} mM free), maximizing functional and safe primers.`,
       'spec.mg.none':'No sweep result. Load a background and generate primers first.',
-      'spec.mg.offenders': names => `Primers out of range in this column: ${names}.`,
-      'spec.mg.note':'S = Tm_on − Tm_off (°C). Green = on-target favored; red = off-target risk; grey = invalid (Tm_on outside the LAMP window or Tm_off ≥ reaction T). Blue box = suggested Mg²⁺.',
+      'spec.mg.offenders': names => `Functional/safe primers failing in this column: ${names}.`,
+      'spec.mg.note':'Color = off-target safety margin (T_rxn − Tm_off, °C). Green = off-target melts below the reaction temperature (safe, larger = safer); red = Tm_off ≥ reaction temperature (off-target could prime); grey = non-functional (Tm_on outside the LAMP window). Cell annotation = absolute Tm_off (°C). Blue box = suggested Mg²⁺.',
+      'spec.mg.note2':'Mg shifts absolute Tm (yield and the off-target\'s Tm), not the match/mismatch margin S; specificity is governed by sequence divergence.',
     }
   };
   let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); if(m) return m[1].toLowerCase(); const hl=(document.documentElement.getAttribute('lang')||'').toLowerCase(); if(hl.indexOf('en')===0) return 'en'; if(hl.indexOf('pt')===0) return 'pt'; try{ const s=localStorage.getItem('lamprime_lang'); if(s==='en'||s==='pt') return s; }catch(e){} return 'pt'; })();
@@ -1131,7 +1141,10 @@
   }
   function fmtMg(v){ return (Math.round(v*100)/100); }
 
-  // Núcleo: varre Mg, calcula S(i,j)=Tm_on−Tm_off, valida e escolhe j* por maximin.
+  // Núcleo: varre Mg; por célula calcula S(i,j)=Tm_on−Tm_off (discriminação
+  // intrínseca, ~invariante ao Mg) E safety(i,j)=T_rxn−Tm_off (margem de
+  // segurança do off-target, DEPENDENTE do Mg). "functional" = Tm_on na janela
+  // LAMP. Escolhe j* pela menor coluna de Mg em que todos são functional E safe.
   function computeMgSweep(primers, bgs, opt){
     const mgMin=opt.mgMin, mgMax=opt.mgMax, mgStep=opt.mgStep>0?opt.mgStep:0.5;
     const cols=[]; for (let mg=mgMin; mg<=mgMax+1e-9; mg+=mgStep) cols.push(Math.round(mg*1000)/1000);
@@ -1145,37 +1158,50 @@
         let off={tm:NaN, flag:true};
         if (offs[i]) off = tmDuplexMg(p.seq, offs[i].alignedTargetBottom, o);
         const S = (isNaN(on.tm)||isNaN(off.tm)) ? NaN : (on.tm - off.tm);
-        const valid = !isNaN(on.tm) && inRange(on.tm, win[0], win[1]) && (isNaN(off.tm) || off.tm < opt.tRxn);
+        // margem de segurança do off-target (Mg-dependente): T_rxn − Tm_off.
+        // Sem off-target (Tm_off=NaN) ⇒ infinitamente seguro.
+        const safety = isNaN(off.tm) ? Infinity : (opt.tRxn - off.tm);
+        const functional = !isNaN(on.tm) && inRange(on.tm, win[0], win[1]);
+        const safe = safety > 0;
+        // "valid" mantido p/ retrocompat: functional E safe (igual à regra antiga)
+        const valid = functional && safe;
         const freeMg = freeMgM(mg/1000, opt.dntp/1000);
-        return { mg, freeMg, tmOn:on.tm, tmOff:off.tm, S, valid };
+        return { mg, freeMg, tmOn:on.tm, tmOff:off.tm, S, safety, functional, safe, valid };
       });
       return { name:p.name, seq:p.seq, off:offs[i], cells };
     });
-    // por coluna: M(j)=min_i S; Feasible(j)=todos válidos; contagem de válidos
+    // por coluna: minSafety=min_i safety; nPass=#(functional E safe); allPass
     const colStats = cols.map((mg,j)=>{
-      let minS=Infinity, allValid=true, nValid=0;
-      rows.forEach(r=>{ const c=r.cells[j]; if (!isNaN(c.S)) minS=Math.min(minS,c.S); if (c.valid) nValid++; else allValid=false; });
+      let minSafety=Infinity, minS=Infinity, allPass=true, nPass=0;
+      rows.forEach(r=>{
+        const c=r.cells[j];
+        if (!isNaN(c.S)) minS=Math.min(minS,c.S);
+        if (isFinite(c.safety)) minSafety=Math.min(minSafety,c.safety);
+        if (c.functional && c.safe) nPass++; else allPass=false;
+      });
       if (!isFinite(minS)) minS=NaN;
-      return { mg, freeMg:freeMgM(mg/1000, opt.dntp/1000), minS, feasible:allValid, nValid };
+      if (!isFinite(minSafety)) minSafety=NaN;
+      return { mg, freeMg:freeMgM(mg/1000, opt.dntp/1000), minS, minSafety, feasible:allPass, nPass, nValid:nPass };
     });
-    // j* = argmax_{feasible} minS, menor Mg em empate; senão argmax nValid
-    let jStar=-1; const feas=colStats.map((c,j)=>({c,j})).filter(o=>o.c.feasible);
-    if (feas.length){
-      let best=-Infinity; feas.forEach(o=>{ if (o.c.minS>best+1e-9){ best=o.c.minS; jStar=o.j; } });
-    } else {
-      let bestN=-1; colStats.forEach((c,j)=>{ if (c.nValid>bestN){ bestN=c.nValid; jStar=j; } });
+    // j* = MENOR coluna de Mg com todos functional E safe; senão a coluna que
+    // maximiza nPass, menor Mg em empate.
+    let jStar=-1;
+    for (let j=0;j<colStats.length;j++){ if (colStats[j].feasible){ jStar=j; break; } }
+    if (jStar<0){
+      let bestN=-1; colStats.forEach((c,j)=>{ if (c.nPass>bestN){ bestN=c.nPass; jStar=j; } });
     }
-    return { cols, rows, colStats, jStar, feasible: feas.length>0, opt };
+    return { cols, rows, colStats, jStar, feasible: jStar>=0 && colStats[jStar].feasible, opt };
   }
 
-  // diverging vermelho(−)→branco(0)→verde(+), cinza p/ inválido/NaN
-  function colorForS(S, valid){
-    if (isNaN(S)) return '#9aa0a6';
-    if (!valid) return '#c3c7cc';
-    const span=10; // °C de escala total
-    const t=Math.max(-1, Math.min(1, S/span));
+  // diverging centrado em 0: vermelho(safety≤0)→branco(0)→verde(safety>0).
+  // Cinza p/ célula não-funcional (Tm_on fora da janela LAMP) ou Tm indefinida.
+  function colorForSafety(safety, functional){
+    if (isNaN(safety)) return '#9aa0a6';
+    if (!functional) return '#c3c7cc';
+    const span=10; // °C de escala total (clamp em ±10)
+    const t=Math.max(-1, Math.min(1, safety/span));
     let r,g,b;
-    if (t<0){ const k=t+1; r=Math.round(198+(255-198)*k); g=Math.round(40+(255-40)*k); b=Math.round(40+(255-40)*k); }
+    if (t<=0){ const k=t+1; r=Math.round(198+(255-198)*k); g=Math.round(40+(255-40)*k); b=Math.round(40+(255-40)*k); }
     else { const k=1-t; r=Math.round(40+(255-40)*k); g=Math.round(167+(255-167)*k); b=Math.round(70+(255-70)*k); }
     return `rgb(${r},${g},${b})`;
   }
@@ -1203,12 +1229,14 @@
       ctx.fillStyle='#222'; ctx.textAlign='right'; ctx.fillText(r.name, padL-8, y+cellH/2);
       r.cells.forEach((c,j)=>{
         const x=padL+j*cellW;
-        ctx.fillStyle=colorForS(c.S, c.valid);
+        // cor = margem de segurança do off-target (T_rxn − Tm_off), diverging em 0
+        ctx.fillStyle=colorForSafety(c.safety, c.functional);
         ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
-        if (!isNaN(c.S)){
-          ctx.fillStyle = c.valid ? '#102010' : '#555';
+        // anotação = Tm_off absoluto (°C); cinza se não-funcional
+        if (!isNaN(c.tmOff)){
+          ctx.fillStyle = c.functional ? '#102010' : '#555';
           ctx.textAlign='center';
-          ctx.fillText((c.S>=0?'+':'')+c.S.toFixed(1), x+cellW/2, y+cellH/2);
+          ctx.fillText(c.tmOff.toFixed(1), x+cellW/2, y+cellH/2);
         }
       });
     });
@@ -1226,29 +1254,35 @@
     const j=res.jStar; const cs = (j>=0) ? res.colStats[j] : null;
     let html='';
     if (cs){
-      const tot=fmtMg(cs.mg), free=fmtMg(cs.freeMg*1000), minS=isNaN(cs.minS)?'—':cs.minS.toFixed(1);
-      html += `<p class="lw-help" style="font-weight:600;">${res.feasible ? D['spec.mg.suggest'](tot, free, minS) : D['spec.mg.noFeas'](tot, free)}</p>`;
+      const tot=fmtMg(cs.mg), free=fmtMg(cs.freeMg*1000), minSafety=isNaN(cs.minSafety)?'—':cs.minSafety.toFixed(1);
+      html += `<p class="lw-help" style="font-weight:600;">${res.feasible ? D['spec.mg.suggest'](tot, free, minSafety) : D['spec.mg.noFeas'](tot, free)}</p>`;
     } else {
       html += `<p class="lw-help">${D['spec.mg.none']}</p>`;
     }
-    // tabela por primer em j*
+    // tabela por primer em j*: #mm | S=Tm_on−Tm_off | Tm_on | Tm_off | safety | status
     if (j>=0){
-      const head=`<tr><th style="text-align:left;">${D['spec.mg.primer']}</th><th>Tm on</th><th>Tm off</th><th>S (Δ)</th><th>${D['spec.mg.valid']}</th></tr>`;
+      const head=`<tr><th style="text-align:left;">${D['spec.mg.primer']}</th><th>#mm</th><th>S (Δ)</th><th>Tm on</th><th>Tm off</th><th>${D['spec.mg.safety']}</th><th>${D['spec.mg.status']}</th></tr>`;
       const body=res.rows.map(r=>{
         const c=r.cells[j];
         const onS=isNaN(c.tmOn)?'—':c.tmOn.toFixed(1), offS=isNaN(c.tmOff)?'—':c.tmOff.toFixed(1);
         const sS=isNaN(c.S)?'—':((c.S>=0?'+':'')+c.S.toFixed(1));
-        const mark=c.valid?'<span style="color:var(--ok);">✓</span>':'<span style="color:var(--warn);">✗</span>';
-        const offInfo = r.off ? ` <span class="lw-suffix">(${r.off.nMismatch} mm)</span>` : '';
-        return `<tr><td style="text-align:left;">${r.name}${offInfo}</td><td>${onS}</td><td>${offS}</td><td>${sS}</td><td>${mark}</td></tr>`;
+        const safeS=isFinite(c.safety)?((c.safety>=0?'+':'')+c.safety.toFixed(1)):'∞';
+        const mmS = r.off ? String(r.off.nMismatch) : '—';
+        // status: ✓ safe & functional; ✗ caso contrário, com a falha apontada
+        let mark;
+        if (c.functional && c.safe) mark='<span style="color:var(--ok);">✓</span>';
+        else { const why=[]; if (!c.functional) why.push(D['spec.mg.notFunc']); if (!c.safe) why.push(D['spec.mg.notSafe']);
+          mark=`<span style="color:var(--warn);">✗ ${why.join(', ')}</span>`; }
+        return `<tr><td style="text-align:left;">${r.name}</td><td>${mmS}</td><td>${sS}</td><td>${onS}</td><td>${offS}</td><td>${safeS}</td><td>${mark}</td></tr>`;
       }).join('');
       html += `<table class="lw-mg-table" style="width:100%; border-collapse:collapse; font-size:12px;"><thead>${head}</thead><tbody>${body}</tbody></table>`;
     }
     if (!res.feasible){
-      const off=res.rows.filter(r=>{ const c=r.cells[Math.max(0,j)]; return !c.valid; }).map(r=>r.name);
+      const off=res.rows.filter(r=>{ const c=r.cells[Math.max(0,j)]; return !(c.functional && c.safe); }).map(r=>r.name);
       if (off.length) html += `<p class="lw-help" style="color:var(--warn);">${D['spec.mg.offenders'](off.join(', '))}</p>`;
     }
     html += `<p class="lw-help" style="font-style:italic;">${D['spec.mg.note']}</p>`;
+    html += `<p class="lw-help" style="font-style:italic;">${D['spec.mg.note2']}</p>`;
     specMgSuggest.innerHTML=html;
   }
 
