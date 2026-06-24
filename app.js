@@ -121,6 +121,23 @@
       'spec.genomeNoneFound':'— nenhuma sequência RefSeq genômica encontrada; tente outro nome ou use um acesso —',
       'spec.genomeOpt': (acc, len, title) => `${acc} · ${len} nt · ${title}`,
       'alert.specGenomeErr':'Falha ao consultar genomas no NCBI (rede). Detalhe: ',
+      // varredura de Mg²⁺ → heatmap
+      'spec.mg.h3':'Varredura de Mg²⁺ → heatmap',
+      'spec.mg.help':'Varre o MgSO₄ total e calcula, para cada primer do Conjunto #1, a margem de Tm on-target − off-target (Tm pareada vs. melhor janela no fundo). Caminho de Tm independente: Mg livre por quelação do dNTP + correção divalente (Owczarzy 2008) e NN de mismatch interno (Allawi/Peyret). Sugere o [Mg²⁺] de trabalho por maximin.',
+      'spec.mg.dntp.label':'dNTP total (mM)',
+      'spec.mg.mon.label':'Monovalente Na⁺/K⁺ (mM)',
+      'spec.mg.trxn.label':'Temperatura de reação (°C)',
+      'spec.mg.mgmin.label':'Mg²⁺ mín. (mM)',
+      'spec.mg.mgmax.label':'Mg²⁺ máx. (mM)',
+      'spec.mg.mgstep.label':'Passo de Mg²⁺ (mM)',
+      'spec.mg.run':'Varredura Mg²⁺ → heatmap',
+      'spec.mg.primer':'Primer',
+      'spec.mg.valid':'Válido',
+      'spec.mg.suggest': (tot, free, minS) => `Mg²⁺ sugerido: ${tot} mM total (~${free} mM livre) · margem mínima S = ${minS} °C (todos os primers válidos).`,
+      'spec.mg.noFeas': (tot, free) => `Nenhuma coluna de Mg²⁺ deixou todos os primers válidos. Melhor coluna: ${tot} mM total (~${free} mM livre), maximizando primers válidos.`,
+      'spec.mg.none':'Sem resultado de varredura. Carregue um fundo e gere primers primeiro.',
+      'spec.mg.offenders': names => `Primers fora da faixa nesta coluna: ${names}.`,
+      'spec.mg.note':'S = Tm_on − Tm_off (°C). Verde = on-target favorecido; vermelho = risco de off-target; cinza = inválido (Tm_on fora da janela LAMP ou Tm_off ≥ T de reação). Caixa azul = Mg²⁺ sugerido.',
     },
     en: {
       'tab.input':'Input', 'tab.params':'Parameters', 'tab.results':'Results',
@@ -227,6 +244,23 @@
       'spec.genomeNoneFound':'— no RefSeq genomic sequence found; try another name or use an accession —',
       'spec.genomeOpt': (acc, len, title) => `${acc} · ${len} nt · ${title}`,
       'alert.specGenomeErr':'Failed to query genomes at NCBI (network). Detail: ',
+      // Mg²⁺ sweep → heatmap
+      'spec.mg.h3':'Mg²⁺ sweep → heatmap',
+      'spec.mg.help':'Sweeps total MgSO₄ and computes, for each primer of Set #1, the on-target − off-target Tm margin (duplex Tm vs. best window in the background). Independent Tm path: free Mg from dNTP chelation + divalent correction (Owczarzy 2008) and internal-mismatch NN (Allawi/Peyret). Suggests the working [Mg²⁺] by maximin.',
+      'spec.mg.dntp.label':'Total dNTP (mM)',
+      'spec.mg.mon.label':'Monovalent Na⁺/K⁺ (mM)',
+      'spec.mg.trxn.label':'Reaction temperature (°C)',
+      'spec.mg.mgmin.label':'Mg²⁺ min (mM)',
+      'spec.mg.mgmax.label':'Mg²⁺ max (mM)',
+      'spec.mg.mgstep.label':'Mg²⁺ step (mM)',
+      'spec.mg.run':'Mg²⁺ sweep → heatmap',
+      'spec.mg.primer':'Primer',
+      'spec.mg.valid':'Valid',
+      'spec.mg.suggest': (tot, free, minS) => `Suggested Mg²⁺: ${tot} mM total (~${free} mM free) · minimum margin S = ${minS} °C (all primers valid).`,
+      'spec.mg.noFeas': (tot, free) => `No Mg²⁺ column kept all primers valid. Best column: ${tot} mM total (~${free} mM free), maximizing valid primers.`,
+      'spec.mg.none':'No sweep result. Load a background and generate primers first.',
+      'spec.mg.offenders': names => `Primers out of range in this column: ${names}.`,
+      'spec.mg.note':'S = Tm_on − Tm_off (°C). Green = on-target favored; red = off-target risk; grey = invalid (Tm_on outside the LAMP window or Tm_off ≥ reaction T). Blue box = suggested Mg²⁺.',
     }
   };
   let LANG = (function(){ const m=location.search.match(/[?&]lang=(en|pt)/i); if(m) return m[1].toLowerCase(); const hl=(document.documentElement.getAttribute('lang')||'').toLowerCase(); if(hl.indexOf('en')===0) return 'en'; if(hl.indexOf('pt')===0) return 'pt'; try{ const s=localStorage.getItem('lamprime_lang'); if(s==='en'||s==='pt') return s; }catch(e){} return 'pt'; })();
@@ -499,6 +533,109 @@
       if (cd<diTh){ pen += (diTh-cd)*0.8; warns.push({t:'dimer', n:`${primers[a].name}/${primers[b].name}`, v:cd.toFixed(1)}); }
     }
     return { penalty: pen*3, warns, worstHairpin: worstHp, worstDimer: worstDi };
+  }
+
+  // ===================================================================
+  // Mg²⁺-vs-especificidade — caminho de Tm SEPARADO (NÃO usa tmNN). Calcula
+  // a margem de Tm on-target − off-target de cada primer ao longo de uma
+  // varredura de MgSO₄ total. Usa Mg livre por quelação 1:1 do dNTP +
+  // correção divalente de Owczarzy 2008 e NN de mismatch interno
+  // (Allawi&SantaLucia 1997/1998; Peyret 1999). ADITIVO: não toca no
+  // caminho de desenho/concordância nem nos termos de iniciação publicados.
+  // ===================================================================
+  // NN de mismatch interno único (Allawi&SantaLucia 1997 G·T; 1998 G·A,C·T[NAR 26:2694],A·C; Peyret 1999 A·A/C·C/G·G/T·T). [dH kcal/mol, dS cal/mol·K], 1 M NaCl. Chave 'XY/WZ' = 5'-XY-3' sobre 3'-WZ-5'.
+  const MM_IMM = {
+'AG/TT':[1.0,0.9],'AT/TG':[-2.5,-8.3],'CG/GT':[-4.1,-11.7],'CT/GG':[-2.8,-8.0],'GG/CT':[3.3,10.4],'GG/TT':[5.8,16.3],'GT/CG':[-4.4,-12.3],'GT/TG':[4.1,9.5],'TG/AT':[-0.1,-1.7],'TG/GT':[-1.4,-6.2],'TT/AG':[-1.3,-5.3],
+'AA/TG':[-0.6,-2.3],'AG/TA':[-0.7,-2.3],'CA/GG':[-0.7,-2.3],'CG/GA':[-4.0,-13.2],'GA/CG':[-0.6,-1.0],'GG/CA':[0.5,3.2],'TA/AG':[0.7,0.7],'TG/AA':[3.0,7.4],
+'AC/TT':[0.7,0.2],'AT/TC':[-1.2,-6.2],'CC/GT':[-0.8,-4.5],'CT/GC':[-1.5,-6.1],'GC/CT':[2.3,5.4],'GT/CC':[5.2,13.5],'TC/AT':[1.2,0.7],'TT/AC':[1.0,0.7],
+'AA/TC':[2.3,4.6],'AC/TA':[5.3,14.6],'CA/GC':[1.9,3.7],'CC/GA':[0.6,-0.6],'GA/CC':[5.2,14.2],'GC/CA':[-0.7,-3.8],'TA/AC':[3.4,8.0],'TC/AA':[7.6,20.2],
+'AA/TA':[1.2,1.7],'CA/GA':[-0.9,-4.2],'GA/CA':[-2.9,-9.8],'TA/AA':[4.7,12.9],
+'AC/TC':[0.0,-4.4],'CC/GC':[-1.5,-7.2],'GC/CC':[3.6,8.9],'TC/AC':[6.1,16.4],
+'AG/TG':[-3.1,-9.5],'CG/GG':[-4.9,-15.3],'GG/CG':[-6.0,-15.8],'TG/AG':[1.6,3.6],
+'AT/TT':[-2.7,-10.8],'CT/GT':[-5.0,-15.8],'GT/CT':[-2.2,-8.4],'TT/AT':[0.2,-1.5]
+  };
+
+  // Mg livre via equilíbrio de quelação 1:1 com dNTP (Ka=3e4 M^-1). Conc. em MOLAR.
+  function freeMgM(totMgM, dntpM, Ka=3e4){ const B=Ka*dntpM - Ka*totMgM + 1; return (-(B)+Math.sqrt(B*B+4*Ka*totMgM))/(2*Ka); }
+  // Correção divalente Owczarzy 2008. tmK1M = Tm(K) a 1 M Na+ (sem termo de sal). monM=[Na+K+Tris/2]. Retorna Tm em °C.
+  function owczarzy2008(tmK1M, freeMg, monM, fGC, Nbp){
+    const ln=Math.log; let a=3.92,b=-0.911,c=6.26,d=1.42,e=-48.2,f=52.5,g=8.31;
+    const R = Math.sqrt(Math.max(freeMg,1e-9))/Math.max(monM,1e-9);
+    if (R < 0.22){ /* monovalente dominante: sem termo divalente (LAMP raramente aqui) */ return tmK1M-273.15 + 0; }
+    if (R < 6.0){ a=3.92*(0.843-0.352*Math.sqrt(monM)*ln(monM)); d=1.42*(1.279-4.03e-3*ln(monM)-8.03e-3*ln(monM)**2); g=8.31*(0.486-0.258*ln(monM)+5.25e-3*ln(monM)**3); }
+    const lm=ln(freeMg);
+    const corr=(a + b*lm + fGC*(c + d*lm) + (1/(2*(Nbp-1)))*(e + f*lm + g*lm*lm))*1e-5;
+    const tmKc = 1/(1/tmK1M + corr);
+    return tmKc - 273.15;
+  }
+  // Tm de um duplexo `top` (5'->3') pareado com `bottom` (3'->5', i.e. o alvo alinhado lido 3'->5'),
+  // posição i pareia top[i]:bottom[i]; permite mismatches internos. opt={mg,dntp,mon,oligoNM}, conc. em mM (exceto oligoNM em nM).
+  // Retorna {tm:°C, flag:bool} — flag=true se algum stack não-WC ficou sem parâmetro (penalizado).
+  function tmDuplexMg(top, bottom, opt){
+    top=(top||'').toUpperCase(); bottom=(bottom||'').toUpperCase();
+    const N=Math.min(top.length, bottom.length); if (N<2) return {tm:NaN, flag:true};
+    const isWC = (x,y) => (x==='A'&&y==='T')||(x==='T'&&y==='A')||(x==='G'&&y==='C')||(x==='C'&&y==='G');
+    let dH=0, dS=0, flag=false, gcMatch=0;
+    for (let i=0;i<N;i++){ if (isWC(top[i], bottom[i])) gcMatch += (top[i]==='G'||top[i]==='C')?1:0; }
+    for (let i=0;i<N-1;i++){
+      const a=top[i], b=top[i+1], w=bottom[i], z=bottom[i+1];
+      if (isWC(a,w) && isWC(b,z)){
+        // stack Watson-Crick: usa a tabela NN existente (5'XY3' do top)
+        const d=a+b; if (NN_DH[d]===undefined){ flag=true; continue; }
+        dH+=NN_DH[d]; dS+=NN_DS[d];
+      } else {
+        // stack com pelo menos um mismatch interno: MM_IMM
+        const key=a+b+'/'+w+z;
+        let p=MM_IMM[key];
+        if (!p){ // tenta a equivalência por inversão de orientação (lê o stack pelo outro sentido)
+          const rkey=z+w+'/'+b+a; p=MM_IMM[rkey];
+        }
+        if (p){ dH+=p[0]; dS+=p[1]; }
+        else { // par desconhecido (ex.: mismatch terminal ou duplo mismatch): fortemente desestabilizante
+          dH+=0; dS+=12; flag=true; // ΔS positivo penaliza (reduz |dS_total|) → baixa a Tm
+        }
+      }
+    }
+    // termos de iniciação (mesmos valores publicados) pelos pares terminais; só pares WC contam
+    const ini = (x,y) => isWC(x,y) ? ((x==='G'||x==='C')?[0.1,-2.8]:[2.3,4.1]) : [0,0];
+    const [h5,s5]=ini(top[0],bottom[0]); const [h3,s3]=ini(top[N-1],bottom[N-1]); dH+=h5+h3; dS+=s5+s3;
+    const C=((opt&&opt.oligoNM)||TM_OLIGO_NM)*1e-9;
+    const denom = dS + R_GAS*Math.log(C/4);
+    if (!(denom<0)) return {tm:NaN, flag:true};
+    const tmK1M = (dH*1000)/denom;            // Tm(K) a 1 M Na+ (sem termo de sal)
+    const totMgM=((opt&&opt.mg!=null?opt.mg:8))/1000;  // mM -> M
+    const dntpM =((opt&&opt.dntp!=null?opt.dntp:1.4))/1000;
+    const monM  =Math.max(1e-3, ((opt&&opt.mon!=null?opt.mon:50))/1000);
+    const fGC = gcMatch / N;
+    const tmC = owczarzy2008(tmK1M, freeMgM(totMgM, dntpM), monM, fGC, N);
+    return {tm:tmC, flag};
+  }
+  // complemento Watson-Crick alinhado 3'->5' (para a posição i parear top[i]) — alvo perfeito on-target
+  function wcBottom(top){ top=(top||'').toUpperCase(); let o=''; for (let i=0;i<top.length;i++) o+=comp(top[i]); return o; }
+
+  // Melhor janela off-target sem gaps: desliza `primer` sobre cada fundo (ambas as fitas),
+  // acha a janela com MENOS mismatches; retorna a base do alvo pareada (3'->5') p/ tmDuplexMg.
+  // Força bruta O(primerLen*bgLen) — ok p/ amplicon/gene/plasmídeo. (genoma inteiro pediria índice k-mer; trabalho futuro.)
+  function bestOffWindow(primer, bgSeqs){
+    primer=(primer||'').toUpperCase(); const Lp=primer.length; if (Lp<2) return null;
+    let best=null;
+    const scan=(seq, strand)=>{
+      for (let s=0; s+Lp<=seq.length; s++){
+        let mm=0; for (let i=0;i<Lp;i++){ if (seq[s+i]!==primer[i]) mm++; }
+        if (!best || mm<best.nMismatch){
+          // bottom alinhado 3'->5' tal que top[i]:bottom[i] são as bases efetivamente justapostas:
+          // o alvo (seq) fornece a base complementar; bottom[i] = complemento da base do alvo na fita oposta
+          let bottom=''; for (let i=0;i<Lp;i++) bottom+=comp(seq[s+i]);
+          best={ alignedTargetBottom:bottom, nMismatch:mm, pos:s, strand };
+          if (mm===0) return; // ótimo perfeito, pode parar esta fita
+        }
+      }
+    };
+    (bgSeqs||[]).forEach(bg=>{
+      const fwd=bg.seq||bg; scan(fwd, '+');
+      scan(revComp(fwd), '−');
+    });
+    return best;
   }
 
   const inRange = (x, lo, hi) => x>=lo && x<=hi;
@@ -970,6 +1107,181 @@
   })();
 
   // ===================================================================
+  // Varredura de Mg²⁺ → heatmap (ADITIVO). Usa o conjunto desenhado atual
+  // (mesmo que renderSpec/btnScreen: lastData.sets[0]) e o fundo carregado
+  // (specBg). Para cada primer e cada MgSO₄ total, calcula a margem de Tm
+  // on−off (tmDuplexMg, caminho separado) e sugere o [Mg²⁺] por maximin.
+  // ===================================================================
+  const specDntp = qs('#spec-dntp');
+  const specMon = qs('#spec-mon');
+  const specTrxn = qs('#spec-trxn');
+  const specMgmin = qs('#spec-mgmin');
+  const specMgmax = qs('#spec-mgmax');
+  const specMgstep = qs('#spec-mgstep');
+  const btnMgSweep = qs('#btn-mgsweep');
+  const specMgHeatmap = qs('#specMgHeatmap');
+  const specMgSuggest = qs('#specMgSuggest');
+  let lastMg = null; // último resultado da varredura (para re-render ao trocar idioma)
+
+  // faixa de Tm on-target válida por papel do primer (janela LAMP)
+  function lampTmWindow(name){
+    if (/^(F3|B3|F2|B2)$/.test(name)) return [59,61];
+    if (/^(F1c|B1c|LF|LB)$/.test(name)) return [64,66];
+    return [59,66]; // relaxado
+  }
+  function fmtMg(v){ return (Math.round(v*100)/100); }
+
+  // Núcleo: varre Mg, calcula S(i,j)=Tm_on−Tm_off, valida e escolhe j* por maximin.
+  function computeMgSweep(primers, bgs, opt){
+    const mgMin=opt.mgMin, mgMax=opt.mgMax, mgStep=opt.mgStep>0?opt.mgStep:0.5;
+    const cols=[]; for (let mg=mgMin; mg<=mgMax+1e-9; mg+=mgStep) cols.push(Math.round(mg*1000)/1000);
+    // off-target alinhado uma vez por primer (independe do Mg)
+    const offs = primers.map(p => bestOffWindow(p.seq, bgs));
+    const rows = primers.map((p,i)=>{
+      const win=lampTmWindow(p.name);
+      const cells = cols.map(mg=>{
+        const o={ mg, dntp:opt.dntp, mon:opt.mon, oligoNM:TM_OLIGO_NM };
+        const on = tmDuplexMg(p.seq, wcBottom(p.seq), o);
+        let off={tm:NaN, flag:true};
+        if (offs[i]) off = tmDuplexMg(p.seq, offs[i].alignedTargetBottom, o);
+        const S = (isNaN(on.tm)||isNaN(off.tm)) ? NaN : (on.tm - off.tm);
+        const valid = !isNaN(on.tm) && inRange(on.tm, win[0], win[1]) && (isNaN(off.tm) || off.tm < opt.tRxn);
+        const freeMg = freeMgM(mg/1000, opt.dntp/1000);
+        return { mg, freeMg, tmOn:on.tm, tmOff:off.tm, S, valid };
+      });
+      return { name:p.name, seq:p.seq, off:offs[i], cells };
+    });
+    // por coluna: M(j)=min_i S; Feasible(j)=todos válidos; contagem de válidos
+    const colStats = cols.map((mg,j)=>{
+      let minS=Infinity, allValid=true, nValid=0;
+      rows.forEach(r=>{ const c=r.cells[j]; if (!isNaN(c.S)) minS=Math.min(minS,c.S); if (c.valid) nValid++; else allValid=false; });
+      if (!isFinite(minS)) minS=NaN;
+      return { mg, freeMg:freeMgM(mg/1000, opt.dntp/1000), minS, feasible:allValid, nValid };
+    });
+    // j* = argmax_{feasible} minS, menor Mg em empate; senão argmax nValid
+    let jStar=-1; const feas=colStats.map((c,j)=>({c,j})).filter(o=>o.c.feasible);
+    if (feas.length){
+      let best=-Infinity; feas.forEach(o=>{ if (o.c.minS>best+1e-9){ best=o.c.minS; jStar=o.j; } });
+    } else {
+      let bestN=-1; colStats.forEach((c,j)=>{ if (c.nValid>bestN){ bestN=c.nValid; jStar=j; } });
+    }
+    return { cols, rows, colStats, jStar, feasible: feas.length>0, opt };
+  }
+
+  // diverging vermelho(−)→branco(0)→verde(+), cinza p/ inválido/NaN
+  function colorForS(S, valid){
+    if (isNaN(S)) return '#9aa0a6';
+    if (!valid) return '#c3c7cc';
+    const span=10; // °C de escala total
+    const t=Math.max(-1, Math.min(1, S/span));
+    let r,g,b;
+    if (t<0){ const k=t+1; r=Math.round(198+(255-198)*k); g=Math.round(40+(255-40)*k); b=Math.round(40+(255-40)*k); }
+    else { const k=1-t; r=Math.round(40+(255-40)*k); g=Math.round(167+(255-167)*k); b=Math.round(70+(255-70)*k); }
+    return `rgb(${r},${g},${b})`;
+  }
+
+  function drawMgHeatmap(res){
+    if (!specMgHeatmap || !specMgHeatmap.getContext) return;
+    const ctx=specMgHeatmap.getContext('2d');
+    const nR=res.rows.length, nC=res.cols.length;
+    const padL=58, padT=34, cellW=Math.max(26, Math.min(54, 720/Math.max(1,nC))), cellH=26;
+    const W=padL+nC*cellW+12, H=padT+nR*cellH+18;
+    specMgHeatmap.width=W; specMgHeatmap.height=H;
+    ctx.clearRect(0,0,W,H);
+    ctx.font='11px system-ui,Arial,sans-serif'; ctx.textBaseline='middle';
+    // cabeçalho das colunas: totMg / ~freeMg
+    res.cols.forEach((mg,j)=>{
+      const x=padL+j*cellW; const cs=res.colStats[j];
+      ctx.save(); ctx.translate(x+cellW/2, padT-6); ctx.rotate(-Math.PI/4);
+      ctx.fillStyle='#333'; ctx.textAlign='right';
+      ctx.fillText(`${fmtMg(mg)}/${fmtMg(cs.freeMg*1000)}`, 0, 0);
+      ctx.restore();
+    });
+    // linhas
+    res.rows.forEach((r,i)=>{
+      const y=padT+i*cellH;
+      ctx.fillStyle='#222'; ctx.textAlign='right'; ctx.fillText(r.name, padL-8, y+cellH/2);
+      r.cells.forEach((c,j)=>{
+        const x=padL+j*cellW;
+        ctx.fillStyle=colorForS(c.S, c.valid);
+        ctx.fillRect(x+1, y+1, cellW-2, cellH-2);
+        if (!isNaN(c.S)){
+          ctx.fillStyle = c.valid ? '#102010' : '#555';
+          ctx.textAlign='center';
+          ctx.fillText((c.S>=0?'+':'')+c.S.toFixed(1), x+cellW/2, y+cellH/2);
+        }
+      });
+    });
+    // caixa de destaque na coluna j*
+    if (res.jStar>=0){
+      const x=padL+res.jStar*cellW;
+      ctx.strokeStyle='#1558d6'; ctx.lineWidth=2.5;
+      ctx.strokeRect(x+0.5, padT+0.5, cellW-1, nR*cellH-1);
+    }
+  }
+
+  function renderMgSuggest(res){
+    if (!specMgSuggest) return; const D=L();
+    if (!res){ specMgSuggest.innerHTML=''; return; }
+    const j=res.jStar; const cs = (j>=0) ? res.colStats[j] : null;
+    let html='';
+    if (cs){
+      const tot=fmtMg(cs.mg), free=fmtMg(cs.freeMg*1000), minS=isNaN(cs.minS)?'—':cs.minS.toFixed(1);
+      html += `<p class="lw-help" style="font-weight:600;">${res.feasible ? D['spec.mg.suggest'](tot, free, minS) : D['spec.mg.noFeas'](tot, free)}</p>`;
+    } else {
+      html += `<p class="lw-help">${D['spec.mg.none']}</p>`;
+    }
+    // tabela por primer em j*
+    if (j>=0){
+      const head=`<tr><th style="text-align:left;">${D['spec.mg.primer']}</th><th>Tm on</th><th>Tm off</th><th>S (Δ)</th><th>${D['spec.mg.valid']}</th></tr>`;
+      const body=res.rows.map(r=>{
+        const c=r.cells[j];
+        const onS=isNaN(c.tmOn)?'—':c.tmOn.toFixed(1), offS=isNaN(c.tmOff)?'—':c.tmOff.toFixed(1);
+        const sS=isNaN(c.S)?'—':((c.S>=0?'+':'')+c.S.toFixed(1));
+        const mark=c.valid?'<span style="color:var(--ok);">✓</span>':'<span style="color:var(--warn);">✗</span>';
+        const offInfo = r.off ? ` <span class="lw-suffix">(${r.off.nMismatch} mm)</span>` : '';
+        return `<tr><td style="text-align:left;">${r.name}${offInfo}</td><td>${onS}</td><td>${offS}</td><td>${sS}</td><td>${mark}</td></tr>`;
+      }).join('');
+      html += `<table class="lw-mg-table" style="width:100%; border-collapse:collapse; font-size:12px;"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+    }
+    if (!res.feasible){
+      const off=res.rows.filter(r=>{ const c=r.cells[Math.max(0,j)]; return !c.valid; }).map(r=>r.name);
+      if (off.length) html += `<p class="lw-help" style="color:var(--warn);">${D['spec.mg.offenders'](off.join(', '))}</p>`;
+    }
+    html += `<p class="lw-help" style="font-style:italic;">${D['spec.mg.note']}</p>`;
+    specMgSuggest.innerHTML=html;
+  }
+
+  function buildMgHeatmap(){
+    const D=L();
+    if (!lastData || !lastData.sets || !lastData.sets.length){ alert(D['alert.specNoDesign']); return; }
+    const bgs=parseFastaMulti(specBg ? specBg.value : '');
+    if (!bgs.length){ alert(D['alert.specNoBg']); return; }
+    const num=(el,d)=>{ const v=parseFloat(el&&el.value); return isNaN(v)?d:v; };
+    const opt={
+      dntp:num(specDntp,1.6), mon:num(specMon,50), tRxn:num(specTrxn,63),
+      mgMin:num(specMgmin,2), mgMax:num(specMgmax,10), mgStep:num(specMgstep,0.5)
+    };
+    const set=lastData.sets[0];
+    const primers=primersFromSet(set);
+    const res=computeMgSweep(primers, bgs, opt);
+    lastMg=res;
+    drawMgHeatmap(res);
+    renderMgSuggest(res);
+  }
+
+  if (btnMgSweep) btnMgSweep.addEventListener('click', () => {
+    try { buildMgHeatmap(); }
+    catch (err){ console.error('mg sweep error', err); alert(L()['alert.designErr']+(err && err.message ? err.message : err)); }
+  });
+
+  // presets de dNTP (PrimerExplorer 1.6 mM / NEB 5.6 mM)
+  (function(){
+    const a=document.getElementById('specDntpPE'); if (a && specDntp) a.addEventListener('click', ()=>{ specDntp.value='1.6'; });
+    const b=document.getElementById('specDntpNEB'); if (b && specDntp) b.addEventListener('click', ()=>{ specDntp.value='5.6'; });
+  })();
+
+  // ===================================================================
   // i18n — aplicação no DOM + botão de idioma
   // ===================================================================
   function applyLang(lang) {
@@ -987,6 +1299,7 @@
     // re-renderiza resultados em cache no novo idioma
     if (lastData) renderResults(lastData);
     if (lastSpec) renderSpec(lastSpec);
+    if (lastMg) renderMgSuggest(lastMg);
   }
 
   // O botão de idioma é um LINK NATIVO entre LAMPrime.html (PT) e LAMPrime_en.html (EN);

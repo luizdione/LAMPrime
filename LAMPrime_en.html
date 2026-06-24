@@ -325,6 +325,45 @@
             <button id="btn-screen" class="lw-btn primary" data-i18n="btn.screen">Triar especificidade</button>
           </div>
           <p class="lw-help" style="font-style:italic;" data-i18n="spec.privacy">Privacidade: a triagem roda no seu navegador e os primers não saem da página. A rede só é acessada se você usar “Buscar FASTA no NCBI” (são enviados apenas os identificadores públicos).</p>
+
+          <hr style="border:none; border-top:1px solid var(--border,#ddd); margin:16px 0;">
+          <h3 data-i18n="spec.mg.h3">Mg²⁺ sweep → heatmap</h3>
+          <p class="lw-help" style="text-align:justify;" data-i18n="spec.mg.help">Sweeps total MgSO₄ and computes, for each primer of Set #1, the on-target − off-target Tm margin (duplex Tm vs. best window in the background). Independent Tm path: free Mg from dNTP chelation + divalent correction (Owczarzy 2008) and internal-mismatch NN (Allawi/Peyret). Suggests the working [Mg²⁺] by maximin.</p>
+          <div class="lw-input-row">
+            <label for="spec-dntp" class="lw-label" data-i18n="spec.mg.dntp.label">Total dNTP (mM)</label>
+            <input id="spec-dntp" type="number" class="lw-input" min="0" max="20" step="0.1" value="1.6">
+            <div class="lw-actions">
+              <button type="button" id="specDntpPE" class="lw-btn ghost">PrimerExplorer 1.6</button>
+              <button type="button" id="specDntpNEB" class="lw-btn ghost">NEB 5.6</button>
+            </div>
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-mon" class="lw-label" data-i18n="spec.mg.mon.label">Monovalent Na⁺/K⁺ (mM)</label>
+            <input id="spec-mon" type="number" class="lw-input" min="0" max="500" step="1" value="50">
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-trxn" class="lw-label" data-i18n="spec.mg.trxn.label">Reaction temperature (°C)</label>
+            <input id="spec-trxn" type="number" class="lw-input" min="50" max="75" step="0.5" value="63">
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-mgmin" class="lw-label" data-i18n="spec.mg.mgmin.label">Mg²⁺ min (mM)</label>
+            <input id="spec-mgmin" type="number" class="lw-input" min="0" max="40" step="0.5" value="2">
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-mgmax" class="lw-label" data-i18n="spec.mg.mgmax.label">Mg²⁺ max (mM)</label>
+            <input id="spec-mgmax" type="number" class="lw-input" min="0" max="40" step="0.5" value="10">
+          </div>
+          <div class="lw-input-row">
+            <label for="spec-mgstep" class="lw-label" data-i18n="spec.mg.mgstep.label">Mg²⁺ step (mM)</label>
+            <input id="spec-mgstep" type="number" class="lw-input" min="0.1" max="5" step="0.1" value="0.5">
+          </div>
+          <div class="lw-actions">
+            <button id="btn-mgsweep" class="lw-btn primary" data-i18n="spec.mg.run">Mg²⁺ sweep → heatmap</button>
+          </div>
+          <div style="overflow:auto; margin-top:10px;">
+            <canvas id="specMgHeatmap" width="10" height="10" style="max-width:100%;"></canvas>
+          </div>
+          <div id="specMgSuggest" style="margin-top:8px;"></div>
         </div>
         <div class="lw-card">
           <h2 data-i18n="spec.res.h2">Resultado da triagem</h2>
@@ -338,7 +377,7 @@
       <div>
         <small>
           <span data-i18n-html="footer.html"><strong>LAMPrime</strong> — desenho de primers LAMP no navegador (Tm nearest-neighbor SantaLucia 1998; geometria PrimerExplorer V5/NEB). Código aberto (MIT): <a href="https://github.com/luizdione/LAMPrime" target="_blank" rel="noopener" style="color:var(--accent);">github.com/luizdione/LAMPrime</a>.</span><br>
-          <span data-i18n="footer.lab">Laboratório de Genética Molecular — IFRJ. De-Melo, Luiz Dione Barbosa — Copyright 2025–2026.</span> · v1.1
+          <span data-i18n="footer.lab">Laboratório de Genética Molecular — IFRJ. De-Melo, Luiz Dione Barbosa — Copyright 2025–2026.</span> · v1.2
         </small>
       </div>
     </footer>
