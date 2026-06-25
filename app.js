@@ -1309,7 +1309,7 @@
     catch (err){ console.error('mg sweep error', err); alert(L()['alert.designErr']+(err && err.message ? err.message : err)); }
   });
 
-  // presets de dNTP (PrimerExplorer 1.6 mM / NEB 5.6 mM)
+  // presets de dNTP total (baixo 1.6 mM / alto 5.6 mM)
   (function(){
     const a=document.getElementById('specDntpPE'); if (a && specDntp) a.addEventListener('click', ()=>{ specDntp.value='1.6'; });
     const b=document.getElementById('specDntpNEB'); if (b && specDntp) b.addEventListener('click', ()=>{ specDntp.value='5.6'; });
