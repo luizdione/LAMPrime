@@ -12,6 +12,11 @@ sys.stdout.reconfigure(encoding='utf-8')
 NN_DH={'AA':-7.9,'AT':-7.2,'TA':-7.2,'CA':-8.5,'GT':-8.4,'CT':-7.8,'GA':-8.2,'CG':-10.6,'GC':-9.8,'GG':-8.0,'AC':-8.4,'AG':-7.8,'TC':-8.2,'TG':-8.5,'TT':-7.9,'CC':-8.0}
 NN_DS={'AA':-22.2,'AT':-20.4,'TA':-21.3,'CA':-22.7,'GT':-22.4,'CT':-21.0,'GA':-22.2,'CG':-27.2,'GC':-24.4,'GG':-19.9,'AC':-22.4,'AG':-21.0,'TC':-22.2,'TG':-22.7,'TT':-22.2,'CC':-19.9}
 R=1.987; NA=50.0; MG=8.0; DNTP=1.4; OLIGO=50e-9
+def free_mg_mM(tot_mM, dntp_mM, Ka=3e4):
+    # Mg2+ livre pela quelacao de equilibrio 1:1 com dNTP (Ka=3e4 M^-1); MESMO modelo do
+    # app.js tmNN (#6), no lugar da subtracao crua max(0, Mg-dNTP). Entrada/saida em mM.
+    t=tot_mM/1000.0; d=dntp_mM/1000.0; B=Ka*d - Ka*t + 1.0
+    return ((-(B)+math.sqrt(B*B+4*Ka*t))/(2*Ka))*1000.0
 def comp(b): return {'A':'T','T':'A','G':'C','C':'G','N':'N'}.get(b,'N')
 def rc(s): return ''.join(comp(c) for c in reversed(s))
 def gc(s): 
@@ -26,7 +31,7 @@ def tm(seq):
         dH+=NN_DH[d]; dS+=NN_DS[d]
     for b in (seq[0],seq[-1]):
         h,s=(0.1,-2.8) if b in 'GC' else (2.3,4.1); dH+=h; dS+=s
-    mgf=max(0.0,MG-DNTP); naeq=max(1e-3,(NA+120*math.sqrt(mgf)))/1000.0
+    mgf=free_mg_mM(MG,DNTP); naeq=max(1e-3,(NA+120*math.sqrt(max(0.0,mgf))))/1000.0
     dS_salt=dS+0.368*(N-1)*math.log(naeq)
     return (dH*1000)/(dS_salt+R*math.log(OLIGO/4))-273.15
 

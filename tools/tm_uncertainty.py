@@ -60,7 +60,7 @@ def tm_with(seq, dH_tab, dS_tab, mg=MG, na=NA, dntp=DNTP, oligo=OLIGO):
         dH += dH_tab[d]; dS += dS_tab[d]
     for b in (seq[0], seq[-1]):
         h, s = (0.1, -2.8) if b in 'GC' else (2.3, 4.1); dH += h; dS += s
-    mgf = max(0.0, mg - dntp); naeq = max(1e-3, (na + 120 * math.sqrt(mgf))) / 1000.0
+    mgf = C.free_mg_mM(mg, dntp); naeq = max(1e-3, (na + 120 * math.sqrt(max(0.0, mgf)))) / 1000.0
     dS_salt = dS + 0.368 * (N - 1) * math.log(naeq)
     return (dH * 1000) / (dS_salt + R * math.log(oligo / 4)) - 273.15
 
@@ -162,4 +162,10 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except BrokenPipeError:
+        try:
+            sys.stdout.close()
+        except Exception:
+            pass
