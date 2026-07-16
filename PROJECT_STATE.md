@@ -91,7 +91,21 @@ ROC **parcial até os `.eds` do autor** (referência).
 - Inputs ausentes que bloqueiam o backlog: **BioPython** (não instalado), conjuntos **PrimerDigital**,
   `.eds` (referência da ROC), `manuscript_PT.md`, `build_paper`.
 
-## Decisões preservadas com detalhe pendente
-- **BBRep/APC**, **validação analítica** — fornecer contexto quando possível.
+## Decisões preservadas (agora decifradas via arquivos do AB, 2026-07-16)
+- **BBRep/APC** = alvo **Biochemistry and Biophysics Reports** (open-access, APC).
+- **Validação analítica** = veículo anterior **Analytical Biochemistry** (submissão AB, carta de 24/06/2026 = v1.3).
+- **`.eds` = referência** — saída PrimerExplorer do autor, padrão-ouro da ROC (#13).
+- **Âncora do delta confirmada: AB = v1.3** (`b3861af`). Tudo de 2026-07-16 é pós-AB.
 
-<!-- Fim do estado reconstruído. Preencher os detalhes das "decisões preservadas" quando o autor os fornecer. -->
+## Follow-up pós-merge v1.4 (2026-07-16) — decisões do autor: Giglioti **2018**; incluir **P. falciparum**
+- **`crossreact.js`**: atualizado para o Mg da quelação (#6) + tornado importável (`require.main`/`module.exports`).
+  ⚠️ **Achado**: com o motor #6, o **Set #1** do B. bovis 18S muda de região (pos ~1387–1633 → ~399–658; penalidades
+  do topo empatadas em ~0,1) e a **Tabela 4 passa de 4/8 → 3/8**. Mensagem qualitativa intacta; número é knife-edge.
+  **Recomendação:** reportar a reatividade cruzada **sobre os top-N conjuntos** (robusto ao empate), não só o Set #1.
+- **`pfalciparum_design.js`** (#9): desenho AT-rico via motor do app. Resultado: penalidade **1,2**; F2–B2 **175 nt**;
+  1106 candidatos; 5,0 s. Núcleo nas janelas de Tm; **alças AT-ricas** são o gargalo (LB GC 22%, Tm 53,9 °C;
+  LF GC 30%, Tm 57,3 °C) — 2º caso AT-rico (além do B. bovis cytb), reforça que o desafio AT está nas alças.
+- **Giglioti = 2018** (decisão do autor): repo já 2018; **manuscrito** (que dizia 2019) a alinhar para 2018.
+
+<!-- Fim. -->
+
