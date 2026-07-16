@@ -94,7 +94,7 @@ Legenda de status: **base** = fundação do projeto · **novo** = adicionado nes
 |---|---|---|---|---|
 | Aba de Especificidade | semente 3′ exata + extensão k-mer/alinhamento; FASTA/NCBI | novo `AB? [ ]` | prevê reatividade cruzada in silico | commit `402e016`, `README` |
 | Presets de reatividade cruzada | *A. marginale* vs *A. centrale*; *B. bovis* vs *B. bigemina* | novo (v1.1) `AB? [ ]` | benchmark reprodutível | commit `a7fdeee`, `tools/crossreact.js` |
-| **Métricas sens/spec/ROC (#13)** | quantifica a discriminação on-/off-target; ROC parcial | **novo — em curso** `AB? [ ]` | torna a especificidade *mensurável*; `.eds` = referência | `tools/specificity_metrics.py` (a fazer) |
+| **Métricas sens/spec/ROC (#13)** | especificidade 0,980; sensibilidade do screen 1,000; pAUC parcial | **novo** `AB? [ ]` | torna a especificidade *mensurável*; `.eds` = referência (hook pronto) | `tools/specificity_metrics.py` |
 
 ### 3.4 Validação & reprodutibilidade
 | Componente | O que é | Status | Por que fortalece | Evidência |
@@ -121,7 +121,8 @@ Tudo abaixo está **commitado** na branch `claude/pmm-active-memory-reload-xcptp
 - **#12** `tm_uncertainty.py` (incerteza de Tm; 1998 vs 2004 = robustez). — `3a7eef6`
 - **#11** `benchmark_independent.py` (Tm vs Biopython; acordo ≤ 0,09 °C). — `225b40d`
 - **#9** alvo AT-rico *P. falciparum* 18S. — `225b40d`
-- **#13** métricas sens/spec/ROC — **em curso** (pausado para montar este documento).
+- **#13** `specificity_metrics.py` — especificidade 0,980; sensibilidade do screen 1,000; pAUC parcial
+  (ROC definitiva aguarda os `.eds`). — commit desta rodada
 
 ---
 

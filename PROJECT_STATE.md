@@ -37,7 +37,16 @@ Incerteza de Tm: parâmetros NN **SantaLucia 1998 vs 2004**.
 
 ### #13 — métricas de especificidade sens/spec/ROC
 ROC **parcial até os `.eds` do autor** (referência).
-- Status: **BLOQUEADO PARCIAL** — os `.eds` do autor (saída PrimerExplorer = padrão-ouro) ❌ não estão no repo.
+- Status: ✅ **FEITO** (2026-07-16). `tools/specificity_metrics.py` reproduz o screen do app (semente 3′ +
+  extensão gap-free, duas fitas); verdade-terreno por identidade de sequência (primer deve parear o próprio
+  alvo, não outros organismos).
+- Resultado (ponto de operação semente 13, maxMM 2): **especificidade 0,980**; **sensibilidade do screen 1,000**
+  (os 2 primers que não pareiam a referência — SARS-CoV-2 B3, MTB B1c — são as **variantes primer-vs-referência**
+  já sinalizadas por `concordance.py` como NAO ACHADO, não falhas do screen).
+- Cross-hits reais e esperados: primers do S de SARS-CoV-2 batem em **RaTG13** (~96% idêntico). *M. bovis*
+  excluído dos negativos de IS6110 (deteção esperada — complexo MTB).
+- ROC: o screen é um **filtro** ancorado por semente → FPR satura < 1; reporto **pAUC parcial** (faixa de FPR +
+  TPR médio) em vez de AUC[0,1]. **ROC definitiva exige os `.eds`** (hook `ROC_REFERENCE` no script).
 
 ### #6 — unificar Mg livre (`freeMgM`, Ka=3e4) no `app.js`
 - Status: ✅ **FEITO** (2026-07-16). `freeMgM` promovida a helper compartilhado antes de `tmNN`;
