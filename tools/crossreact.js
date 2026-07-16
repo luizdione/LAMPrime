@@ -395,6 +395,35 @@ function scenario(title, targetFile, bgFile, ownLabel) {
   const cross = runScreen(set1, `${bg.header.slice(0,55)} [${bgFile}]`, bg.seq, SEED, MAXMM);
   console.log('\n  [CROSS-REACTIVITY] Set #1 vs related-organism background:');
   printScreen(cross);
+
+  // ENSEMBLE cross-reactivity: the top-ranked designed sets are near-tied in penalty,
+  // so the single Set #1 count is fragile (a ~0.1 C model change reorders them). Screen the
+  // top-N sets to report a ROBUST RANGE instead of one knife-edge number.
+  const ens = ensembleCrossReact(des, bg.seq, Math.min(10, des.sets.length), SEED, MAXMM);
+  console.log(`\n  [CROSS-REACTIVITY, ENSEMBLE] Top-${ens.n} near-tied designs vs ${bgFile}:`);
+  console.log(`    flagged primers /8 per set (sorted): [${ens.counts.join(', ')}]`);
+  console.log(`    penalties of these sets: [${ens.penalties.join(', ')}]`);
+  console.log(`    ROBUST RANGE: ${ens.min}–${ens.max} of 8 (median ${ens.median}) across the ${ens.n} best-ranked designs`);
+  console.log(`    union of primers ever flagged: {${ens.unionNames.join(', ')}}`);
+}
+
+// Screen the top-N designed sets against a background; returns the distribution of
+// flagged-primer counts (robust to the near-tie in penalty ranking). See §3.3 of the paper.
+function ensembleCrossReact(des, bgSeq, n, seed, maxMM) {
+  const counts = [], penalties = [], union = new Set();
+  for (let i = 0; i < n; i++) {
+    const r = runScreen(des.sets[i], '', bgSeq, seed, maxMM);
+    counts.push(r.hits);
+    penalties.push(Number(des.sets[i].penalty.toFixed(1)));
+    for (const row of r.rows) if (row.flagged) union.add(row.name);
+  }
+  const sorted = counts.slice().sort((a, b) => a - b);
+  return {
+    n, counts: sorted, penalties,
+    min: sorted[0], max: sorted[sorted.length - 1],
+    median: sorted[Math.floor(sorted.length / 2)],
+    unionNames: [...union],
+  };
 }
 
 if (require.main === module) {
@@ -420,4 +449,4 @@ if (require.main === module) {
 }
 
 // Exportado para reuso (ex.: desenho de novos alvos como P. falciparum 18S) sem re-executar os cenarios.
-module.exports = { designLAMP, defaultParams, loadFasta, primersFromSet, runScreen, tmNN, freeMgM, gcPct, DATA, SEED, MAXMM };
+module.exports = { designLAMP, defaultParams, loadFasta, primersFromSet, runScreen, ensembleCrossReact, tmNN, freeMgM, gcPct, DATA, SEED, MAXMM };

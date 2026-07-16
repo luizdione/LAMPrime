@@ -1,7 +1,7 @@
 # Changelog
 
 ## v1.4.1 — 2026-07-16
-- Consistência do motor: `tools/crossreact.js` passa a usar o mesmo Mg²⁺ livre por quelação (Ka=3×10⁴) de `app.js` (#6) e torna-se importável. Nota: com o motor unificado, o conjunto top-ranked (Set #1) do B. bovis 18S muda de região no gene (penalidades do topo praticamente empatadas), alterando a contagem de reatividade cruzada específica — a mensagem qualitativa (cross-reatividade no locus 18S conservado) permanece.
+- Consistência do motor: `tools/crossreact.js` passa a usar o mesmo Mg²⁺ livre por quelação (Ka=3×10⁴) de `app.js` (#6) e torna-se importável. Como o conjunto top-ranked (Set #1) é sensível ao empate de penalidade entre desenhos quase equivalentes, a triagem de reatividade cruzada passa a ser reportada em **ensemble** sobre os 10 melhores desenhos (`ensembleCrossReact`): *A. marginale* msp1b × *A. centrale* dá **0–0/8** (nenhum primer sinaliza em nenhum desenho); *B. bovis* 18S × *B. bigemina* dá **2–7/8** (mediana 3), com **todos os 8 primers** sinalizando em ao menos um desenho — a reatividade no locus 18S conservado é, portanto, essencialmente inevitável, um resultado robusto ao desempate.
 - Novo `tools/pfalciparum_design.js`: desenho LAMP do alvo AT-rico *P. falciparum* 18S pelo motor do app (penalidade 1,2; F2–B2 175 nt); demonstra que o desafio de baixo GC recai sobre os primers de alça.
 
 ## v1.4 — 2026-07-16
