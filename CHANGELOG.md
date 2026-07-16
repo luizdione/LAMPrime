@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1 — 2026-07-16
+- Consistência do motor: `tools/crossreact.js` passa a usar o mesmo Mg²⁺ livre por quelação (Ka=3×10⁴) de `app.js` (#6) e torna-se importável. Nota: com o motor unificado, o conjunto top-ranked (Set #1) do B. bovis 18S muda de região no gene (penalidades do topo praticamente empatadas), alterando a contagem de reatividade cruzada específica — a mensagem qualitativa (cross-reatividade no locus 18S conservado) permanece.
+- Novo `tools/pfalciparum_design.js`: desenho LAMP do alvo AT-rico *P. falciparum* 18S pelo motor do app (penalidade 1,2; F2–B2 175 nt); demonstra que o desafio de baixo GC recai sobre os primers de alça.
+
 ## v1.4 — 2026-07-16
 - Motor de Tm: unificação do Mg²⁺ livre. O motor de desenho (`tmNN`) passa a computar o Mg²⁺ livre pelo mesmo equilíbrio de quelação 1:1 com dNTP (Ka=3×10⁴ M⁻¹) já usado pela varredura de especificidade, no lugar da subtração crua `max(0, Mg−dNTP)`. No ponto de operação padrão (Mg 8 mM, dNTP 1,4 mM) o efeito é desprezível (Mg livre 6,600→6,607 mM); a correção importa perto da estequiometria (Mg≈dNTP), onde o modelo cru zerava o Mg livre e derrubava o Tm. Espelhado em `tools/concordance.py` para manter a concordância. Ferramentas novas de validação: `tools/tm_uncertainty.py` (incerteza de Tm; SantaLucia 1998 vs 2004), `tools/benchmark_independent.py` (verificação independente do Tm vs Biopython; acordo ≤0,09 °C) e `tools/specificity_metrics.py` (sens/spec/ROC parcial da triagem de especificidade). Novo alvo AT-rico *P. falciparum* 18S (`tools/data/pfalciparum_18s_M19172.fasta`). `concordance.py` importável; correção do ano de Giglioti (2019→2018).
 

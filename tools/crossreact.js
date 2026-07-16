@@ -35,6 +35,9 @@ const NN_DS = {AA:-22.2,AT:-20.4,TA:-21.3,CA:-22.7,GT:-22.4,CT:-21.0,GA:-22.2,CG
 const R_GAS = 1.987;
 const TM_OLIGO_NM = 50;
 
+// #6: Mg2+ livre por quelacao 1:1 com dNTP (Ka=3e4 M^-1), unificado com app.js/mgspec. Conc. em MOLAR.
+function freeMgM(totMgM, dntpM, Ka=3e4){ const B=Ka*dntpM - Ka*totMgM + 1; return (-(B)+Math.sqrt(B*B+4*Ka*totMgM))/(2*Ka); }
+
 function tmNN(seq, naMM, mgMM, dntpMM, oligoNM) {
   seq = (seq||'').toUpperCase().replace(/[^ATGC]/g,'');
   const N = seq.length; if (N < 2) return NaN;
@@ -42,8 +45,8 @@ function tmNN(seq, naMM, mgMM, dntpMM, oligoNM) {
   for (let i=0;i<N-1;i++){ const d=seq.substr(i,2); if(NN_DH[d]===undefined) return NaN; dH+=NN_DH[d]; dS+=NN_DS[d]; }
   const init = b => (b==='G'||b==='C') ? [0.1,-2.8] : [2.3,4.1];
   const [h5,s5]=init(seq[0]); const [h3,s3]=init(seq[N-1]); dH+=h5+h3; dS+=s5+s3;
-  const mgFree = Math.max(0, (mgMM||0) - (dntpMM||0));
-  const naEq = Math.max(1e-3, (naMM||0) + 120*Math.sqrt(mgFree)) / 1000;
+  const mgFree = freeMgM((mgMM||0)/1000, (dntpMM||0)/1000) * 1000; // #6: quelacao (M -> mM)
+  const naEq = Math.max(1e-3, (naMM||0) + 120*Math.sqrt(Math.max(0,mgFree))) / 1000;
   const dS_salt = dS + 0.368*(N-1)*Math.log(naEq);
   const C = (oligoNM||TM_OLIGO_NM)*1e-9;
   return (dH*1000) / (dS_salt + R_GAS*Math.log(C/4)) - 273.15;
@@ -394,22 +397,27 @@ function scenario(title, targetFile, bgFile, ownLabel) {
   printScreen(cross);
 }
 
-console.log('LAMPrime in-silico cross-reactivity screen — reproducible harness');
-console.log('Algorithm: VERBATIM pure functions from app.js (design + 3\'-seed specificity screen)');
-console.log(`Params: app defaults | seed=${SEED} (effective k clamped to min primer len), maxMM=${MAXMM}`);
+if (require.main === module) {
+  console.log('LAMPrime in-silico cross-reactivity screen — reproducible harness');
+  console.log('Algorithm: VERBATIM pure functions from app.js (design + 3\'-seed specificity screen)');
+  console.log(`Params: app defaults | seed=${SEED} (effective k clamped to min primer len), maxMM=${MAXMM}`);
 
-scenario(
-  'SCENARIO 1 — A. marginale msp1b design  vs  Anaplasma centrale background',
-  'amarginale_msp1b_synthetic.fasta',
-  'acentrale_genome_CP001759.fasta',
-  'A. marginale msp1b'
-);
+  scenario(
+    'SCENARIO 1 — A. marginale msp1b design  vs  Anaplasma centrale background',
+    'amarginale_msp1b_synthetic.fasta',
+    'acentrale_genome_CP001759.fasta',
+    'A. marginale msp1b'
+  );
 
-scenario(
-  'SCENARIO 2 — B. bovis 18S design  vs  Babesia bigemina 18S background',
-  'bbovis_18s_L19077.fasta',
-  'bbigemina_18s_KP710228.fasta',
-  'B. bovis 18S'
-);
+  scenario(
+    'SCENARIO 2 — B. bovis 18S design  vs  Babesia bigemina 18S background',
+    'bbovis_18s_L19077.fasta',
+    'bbigemina_18s_KP710228.fasta',
+    'B. bovis 18S'
+  );
 
-console.log('\nDONE.');
+  console.log('\nDONE.');
+}
+
+// Exportado para reuso (ex.: desenho de novos alvos como P. falciparum 18S) sem re-executar os cenarios.
+module.exports = { designLAMP, defaultParams, loadFasta, primersFromSet, runScreen, tmNN, freeMgM, gcPct, DATA, SEED, MAXMM };
