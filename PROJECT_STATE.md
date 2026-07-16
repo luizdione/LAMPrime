@@ -13,11 +13,14 @@ Objetivo: retomar o backlog na ordem definida, preservando decisões e pendênci
 
 ### #11 — `tools/benchmark_independent.py`
 Tm independente (BioPython) sobre os conjuntos **LAMPrime / publicados / PrimerDigital**.
-- Status: **BLOQUEADO PARCIAL**
-- BioPython: **não instalado** neste container (`import Bio` falha) — requer pip/rede.
-- Conjuntos publicados: ✅ disponíveis (dicts em `tools/concordance.py`: `amarginale_msp1b`, `sarscov2`, `mtb_is6110`).
-- Conjuntos LAMPrime: ✅ deriváveis pelo próprio motor.
-- Conjuntos **PrimerDigital**: ❌ não estão no repo — precisam ser fornecidos.
+- Status: ✅ **FEITO** (2026-07-16). Cruza `concordance.tm()` (LAMPrime) vs BioPython `Tm_NN`
+  (tabela NN4 = SantaLucia & Hicks 2004) nas mesmas condições (conc. efetiva 12,5 nM alinhada).
+- Resultado: conjuntos publicados concordam com o BioPython (salt Owczarzy 2004) em **≤ 0,09 °C**
+  (média 0,07) → **núcleo NN validado por terceiro**. Com salt Owczarzy 2008 a divergência sobe a
+  ~2,4 °C (diferença de **modelo de sal**, não do NN — documentado).
+- Inclui o regime AT-rico do #9 (janelas do 18S de *P. falciparum*): acordo **≤ 0,31 °C** (GC 15–60%).
+- Conjuntos **PrimerDigital**: slot `EXTRA_SETS` no script; adicionar quando o autor fornecer.
+- BioPython é opcional em runtime: se ausente, o script imprime instrução de instalação e sai sem erro.
 
 ### #12 — `tools/tm_uncertainty.py`
 Incerteza de Tm: parâmetros NN **SantaLucia 1998 vs 2004**.
@@ -50,8 +53,11 @@ ROC **parcial até os `.eds` do autor** (referência).
 - Status: ❌ **NÃO EXECUTÁVEL AQUI** (medição depende do hardware do autor).
 
 ### #9 — alvo AT-rico *P. falciparum* 18S
-- Status: **PARCIAL** — a sequência 18S de *P. falciparum* ❌ não está em `tools/data/` (os 18S presentes
-  são de *B. bovis*/*B. bigemina*). Buscar no NCBI ou fornecer accession.
+- Status: ✅ **FEITO** (2026-07-16). FASTA `tools/data/pfalciparum_18s_M19172.fasta` (M19172.1, 2090 nt,
+  **AT 64,4% / GC 35,6%**) baixado do NCBI e versionado como asset offline (como os demais alvos).
+- Wiring: usado como **regime AT-rico** no benchmark independente (#11) — valida o motor de Tm fora da
+  faixa usual de GC (acordo ≤ 0,31 °C). Sem conjunto de primers publicado embarcado (não fabricado);
+  se o autor tiver um conjunto LAMP de 18S de *P. falciparum*, entra em `concordance.py`/`EXTRA_SETS`.
 
 ### NEB / PrimerExplorer V5
 - Status: pendente — falta detalhar o que ainda precisa ser finalizado.
