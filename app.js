@@ -445,6 +445,11 @@
   const R_GAS = 1.987;
   const TM_OLIGO_NM = 50; // conc. representativa para estimativa de Tm (ajustável)
 
+  // Mg²⁺ livre via equilíbrio de quelação 1:1 com dNTP (Ka=3e4 M⁻¹). Conc. em MOLAR.
+  // Helper COMPARTILHADO (#6): usado tanto pelo motor de desenho (tmNN, via von Ahsen 2001)
+  // quanto pela varredura de especificidade (tmDuplexMg, via Owczarzy 2008) — unifica o Mg livre.
+  function freeMgM(totMgM, dntpM, Ka=3e4){ const B=Ka*dntpM - Ka*totMgM + 1; return (-(B)+Math.sqrt(B*B+4*Ka*totMgM))/(2*Ka); }
+
   function tmNN(seq, naMM, mgMM, dntpMM, oligoNM) {
     seq = (seq||'').toUpperCase().replace(/[^ATGC]/g,'');
     const N = seq.length; if (N < 2) return NaN;
@@ -452,9 +457,11 @@
     for (let i=0;i<N-1;i++){ const d=seq.substr(i,2); if(NN_DH[d]===undefined) return NaN; dH+=NN_DH[d]; dS+=NN_DS[d]; }
     const init = b => (b==='G'||b==='C') ? [0.1,-2.8] : [2.3,4.1];
     const [h5,s5]=init(seq[0]); const [h3,s3]=init(seq[N-1]); dH+=h5+h3; dS+=s5+s3;
-    // Na+ equivalente incluindo Mg2+ livre (von Ahsen 2001): Na_eq = Na + 120*sqrt(Mg-dNTP)
-    const mgFree = Math.max(0, (mgMM||0) - (dntpMM||0));
-    const naEq = Math.max(1e-3, (naMM||0) + 120*Math.sqrt(mgFree)) / 1000; // mol/L
+    // Na+ equivalente incluindo Mg2+ livre (von Ahsen 2001): Na_eq = Na + 120*sqrt(Mg_livre).
+    // #6: Mg2+ livre pela quelação de equilíbrio (freeMgM, Ka=3e4), unificado com a varredura,
+    // no lugar da subtração crua max(0, Mg-dNTP) — que zerava o Mg livre na estequiometria.
+    const mgFree = freeMgM((mgMM||0)/1000, (dntpMM||0)/1000) * 1000; // M -> mM
+    const naEq = Math.max(1e-3, (naMM||0) + 120*Math.sqrt(Math.max(0,mgFree))) / 1000; // mol/L
     const dS_salt = dS + 0.368*(N-1)*Math.log(naEq); // correção de sal SantaLucia 1998
     const C = (oligoNM||TM_OLIGO_NM)*1e-9;
     return (dH*1000) / (dS_salt + R_GAS*Math.log(C/4)) - 273.15;
@@ -565,8 +572,8 @@
 'AT/TT':[-2.7,-10.8],'CT/GT':[-5.0,-15.8],'GT/CT':[-2.2,-8.4],'TT/AT':[0.2,-1.5]
   };
 
-  // Mg livre via equilíbrio de quelação 1:1 com dNTP (Ka=3e4 M^-1). Conc. em MOLAR.
-  function freeMgM(totMgM, dntpM, Ka=3e4){ const B=Ka*dntpM - Ka*totMgM + 1; return (-(B)+Math.sqrt(B*B+4*Ka*totMgM))/(2*Ka); }
+  // freeMgM (quelação 1:1, Ka=3e4) foi promovida a helper compartilhado junto a tmNN (#6);
+  // aqui é usada pela correção divalente de Owczarzy 2008.
   // Correção divalente Owczarzy 2008. tmK1M = Tm(K) a 1 M Na+ (sem termo de sal). monM=[Na+K+Tris/2]. Retorna Tm em °C.
   function owczarzy2008(tmK1M, freeMg, monM, fGC, Nbp){
     const ln=Math.log; let a=3.92,b=-0.911,c=6.26,d=1.42,e=-48.2,f=52.5,g=8.31;
