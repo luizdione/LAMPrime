@@ -1,5 +1,8 @@
 # Changelog
 
+## Housekeeping — 2026-07-17
+- Reorganização do repositório (sem mudança de comportamento do app): `app.js`, `styles.css` e `fig2_lamp_architecture.png` movidos para `assets/`; `PROJECT_STATE.md` e `CHANGES_AB_to_BBRep.md` movidos para `docs/` (README, CHANGELOG e LICENSE seguem na raiz); removida a cópia obsoleta de `concordance.py` na raiz (a versão canônica é `tools/concordance.py`). Referências de HTML/README e a allowlist do `.gitignore` atualizadas; `tools/` mantido intacto (os caminhos são citados no manuscrito). **Deploy:** ao republicar no Hostinger, subir a subpasta `assets/` junto com os arquivos HTML.
+
 ## v1.4.1 — 2026-07-16
 - Consistência do motor: `tools/crossreact.js` passa a usar o mesmo Mg²⁺ livre por quelação (Ka=3×10⁴) de `app.js` (#6) e torna-se importável. Como o conjunto top-ranked (Set #1) é sensível ao empate de penalidade entre desenhos quase equivalentes, a triagem de reatividade cruzada passa a ser reportada em **ensemble** sobre os 10 melhores desenhos (`ensembleCrossReact`): *A. marginale* msp1b × *A. centrale* dá **0–0/8** (nenhum primer sinaliza em nenhum desenho); *B. bovis* 18S × *B. bigemina* dá **2–7/8** (mediana 3), com **todos os 8 primers** sinalizando em ao menos um desenho — a reatividade no locus 18S conservado é, portanto, essencialmente inevitável, um resultado robusto ao desempate.
 - Novo `tools/pfalciparum_design.js`: desenho LAMP do alvo AT-rico *P. falciparum* 18S pelo motor do app (penalidade 1,2; F2–B2 175 nt); demonstra que o desafio de baixo GC recai sobre os primers de alça.
