@@ -7,7 +7,8 @@
 # 1) ignora tudo no nivel superior...
 /*
 
-# 2) ...e libera o app web publicavel, os tools de reproducao e os docs
+# 2) ...e libera o app web publicavel (arquivos na raiz p/ deploy simples),
+#    os tools de reproducao e os docs
 !/.gitignore
 !/LICENSE
 !/README.md
@@ -15,7 +16,9 @@
 !/index.html
 !/LAMPrime.html
 !/LAMPrime_en.html
-!/assets/
+!/app.js
+!/styles.css
+!/fig2_lamp_architecture.png
 !/docs/
 !/tools/
 

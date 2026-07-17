@@ -43,9 +43,8 @@ von Ahsen 2001; Kalendar 2011; Eiken PrimerExplorer V5.
 
 - `index.html` — redirects to the English app; `LAMPrime.html` (Portuguese) and
   `LAMPrime_en.html` (English) are the application pages.
-- `assets/app.js` — the design engine plus a built-in PT/EN interface toggle.
-- `assets/styles.css` — styling (dark theme).
-- `assets/fig2_lamp_architecture.png` — primer-architecture figure shown in the app.
+- `app.js` — the design engine plus a built-in PT/EN interface toggle.
+- `styles.css` — styling (dark theme).
 - `tools/concordance.py` — deterministic re-scoring script (see below).
 - `tools/data/` — committed target FASTA files used by the script.
 - `tools/LEGENDS.md` — legends for the committed tables/figures.
