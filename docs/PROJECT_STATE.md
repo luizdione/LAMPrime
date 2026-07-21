@@ -20,6 +20,10 @@ Rodada de execução (grupo A + #8 + verificação ao vivo). Ver CHANGELOG 2026-
   B. bovis 18S 1651 nt = 3,9 s; P. falciparum 2090 nt = 3,5 s). Escala com o tamanho do alvo.
 - **#11 — reproduzido ao vivo:** BioPython instalável via pip (não vem no container). Publicados:
   **máx. |d| = 0,09 °C ✓** (média 0,07); AT-rico P. falciparum: máx. 0,35 °C (faixa GC 10–65%).
+- **#11 EXPANDIDO — painel de %GC (figura complementar):** `tools/gc_concordance.py` +
+  `tools/plot_gc_concordance.py` → **13 conjuntos LAMP publicados por outras ferramentas (PrimerExplorer
+  V3/V4/V5, NEB), 12 organismos, ~30–67 % GC**, cada um QC-mapeado no alvo GenBank. **73 oligos,
+  ≤ 0,153 °C, r = 0,99999.** Figura `tools/figures/figS_tm_concordance_gc.png`. Ver #11 abaixo.
 
 ## Sessão 2026-07-16
 Objetivo: retomar o backlog na ordem definida, preservando decisões e pendências.
@@ -36,6 +40,24 @@ Tm independente (BioPython) sobre os conjuntos **LAMPrime / publicados / PrimerD
 - Inclui o regime AT-rico do #9 (janelas do 18S de *P. falciparum*): acordo **≤ 0,31 °C** (GC 15–60%).
 - Conjuntos **PrimerDigital**: slot `EXTRA_SETS` no script; adicionar quando o autor fornecer.
 - BioPython é opcional em runtime: se ausente, o script imprime instrução de instalação e sai sem erro.
+
+**Extensão (2026-07-21) — painel de %GC para figura complementar: `tools/gc_concordance.py` + `tools/plot_gc_concordance.py`.**
+- Motivação (pedido do autor): não validar com 1 alvo, mas com **8–10 conjuntos LAMP publicados por OUTRAS
+  ferramentas**, cobrindo **conteúdos de GC diferentes**, extraídos da literatura e rodados no LAMPrime.
+- Feito: **13 conjuntos** publicados (curados da literatura), **12 organismos**, desenhados por
+  **PrimerExplorer V3/V4/V5 e NEB** (nenhum do LAMPrime), cobrindo **~30–67 % de GC do amplicon**.
+  Cada conjunto foi **QC-mapeado no alvo GenBank** (os primers formam um amplicon LAMP compacto ~180–240 nt;
+  pega erro de transcrição) e cruzado **Tm LAMPrime vs BioPython bio5** (mesma convenção do #11).
+- Resultado: **73 oligos**, concordância **≤ 0,153 °C** (média 0,069; mediana 0,072), **Pearson r = 0,99999**,
+  **plana ao longo do GC** (figura `tools/figures/figS_tm_concordance_gc.png`; dados `tools/data/gc_concordance.csv`).
+- Conjuntos (por %GC do amplicon): *P. vivax* cox1 (Britton 2016, NEB, 30 %), *E. histolytica* SREHP (Elias 2020, 32 %),
+  *P. falciparum* 18S (Mohon 2014, PE V4, 34 %), *B. bovis* cytb (Arnuphapprasert 2023, PE V5, 35 %),
+  SARS-CoV-2 S (Prakash 2023, 42 %) + ORF1ab (Huang 2020, PE, 44 %), *E. coli* malB (Hill 2008, PE v3, 50 %),
+  Zika E (Calvert 2017, PE V5, 54 %), *A. marginale* msp1b (Giglioti 2018, 54 %), *X. citri* (Webster 2022, PE V5, 55 %),
+  *P. aeruginosa* ecfX (He 2025, PE V5, 64 %), *M. tuberculosis* IS6110 (Bentaleb 2016, 65 %),
+  *M. kansasii* rpoB (Chen 2021, PE V4, 67 %). Alvos versionados em `tools/data/` (região do amplicon p/ genomas grandes).
+- Sequências **verbatim das fontes** (DOIs no cabeçalho de `gc_concordance.py`). PrimerDigital continua bem-vindo
+  no `EXTRA_SETS`, mas a validação multi-ferramenta por GC já não depende dele.
 
 ### #12 — `tools/tm_uncertainty.py`
 Incerteza de Tm: parâmetros NN **SantaLucia 1998 vs 2004**.

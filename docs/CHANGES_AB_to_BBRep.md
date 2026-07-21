@@ -108,6 +108,7 @@ Legenda de status: **base** = fundação do projeto · **novo** = adicionado nes
 | 3 conjuntos publicados | *A. marginale* msp1b; SARS-CoV-2 S; *M. tuberculosis* IS6110 | base `AB? [x]` | ancoragem experimental | `LEGENDS.md` |
 | `concordance.py` importável | execução sob `__main__`; fonte única p/ os outros scripts | **novo** `AB? [ ]` | evita duplicação de sequências/motor | commit `3a7eef6` |
 | Correção ano Giglioti 2019→2018 | consistência com README/LEGENDS | **alterado** `AB? [ ]` | erro de citação corrigido | commit `3a7eef6` |
+| **Painel de Tm por %GC (#11)** | 13 conjuntos publicados por **outras ferramentas** (PrimerExplorer V3/V4/V5, NEB), 12 organismos, ~30–67% GC; Tm LAMPrime vs BioPython, QC por mapeamento | **novo** `AB? [ ]` | validação independente **ampla** (r=0,99999; ≤0,153 °C) — figura complementar | `tools/gc_concordance.py`, `tools/plot_gc_concordance.py`, `figS_tm_concordance_gc.png` |
 
 ### 3.5 Alvos
 | Alvo | Papel | Status | Evidência |
@@ -136,7 +137,11 @@ Tudo abaixo está **commitado** na branch `claude/pmm-active-memory-reload-xcptp
 - [x] **Ancorar o delta**: confirmado **AB = v1.3 (`b3861af`, 24/06/2026)**; caixas `AB?` da §3 preenchidas por ancestralidade git (commits de 2026-07-16 = delta pós-AB). ✅ 2026-07-21
 - [ ] **Sincronizar `manuscript_PT.md`** com os itens da §4 (o texto não está no repo — me forneça).
 - [ ] **#13** finalizar métricas + **ROC completa** com os `.eds` de referência do autor.
-- [ ] **#11** incluir conjuntos **PrimerDigital** (slot `EXTRA_SETS` pronto).
+- [x] **#11** validação de Tm por **painel de %GC** ✅ 2026-07-21: `tools/gc_concordance.py` +
+  `tools/plot_gc_concordance.py` — **13 conjuntos publicados por outras ferramentas** (PrimerExplorer
+  V3/V4/V5, NEB), **12 organismos**, **~30–67 % GC**, todos QC-mapeados; 73 oligos, **≤ 0,153 °C**,
+  r = 0,99999. Figura complementar `tools/figures/figS_tm_concordance_gc.png`. (Conjuntos **PrimerDigital**
+  específicos seguem bem-vindos no `EXTRA_SETS`, mas a validação multi-ferramenta por GC já não depende deles.)
 - [ ] **#8** timing na máquina do autor (não executável aqui).
 - [ ] **build (`build_paper`)** e **#15 "derobotizar"** o texto — dependem do manuscrito.
 - [ ] Enquadramento **AB→BBRep** (§2): enxugar para formato *reports*; conferir APC.

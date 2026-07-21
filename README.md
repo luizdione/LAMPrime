@@ -84,6 +84,22 @@ IS6110; SARS-CoV-2 nucleocapsid N, NC_045512.2:28274–28720) and the SARS-CoV-2
 spike concordance target — so the script is fully deterministic; a sequence is
 fetched from NCBI only if its local file is missing.
 
+### Independent Tm benchmark across GC content
+
+`tools/gc_concordance.py` cross-checks the LAMPrime melting-temperature engine
+against an independent implementation (BioPython `Tm_NN`, NN4 = SantaLucia &
+Hicks 2004; Owczarzy 2004 salt) over **13 published LAMP primer sets designed by
+other tools** (Eiken PrimerExplorer V3/V4/V5 or NEB — none by LAMPrime), spanning
+**~30–67 % amplicon GC** and **12 organisms**. Every set is QC-mapped onto its
+GenBank target (the primers must form a compact LAMP amplicon), and every oligo's
+Tm agrees to **≤ 0.15 °C** (73 oligos; Pearson r = 0.99999), with no bias across
+GC. `tools/plot_gc_concordance.py` renders the complementary figure.
+
+```bash
+python tools/gc_concordance.py && python tools/plot_gc_concordance.py
+# summary + tools/data/gc_concordance.csv + tools/figures/figS_tm_concordance_gc.png
+```
+
 ## License
 
 MIT — see [LICENSE](LICENSE). © 2026 Luiz Dione Barbosa de Melo. Source code and

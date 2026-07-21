@@ -42,3 +42,36 @@ sequences are provided in the primer dictionary (no heuristic split required).
 > Note: a component is reported as "NAO ACHADO" when the published primer differs
 > from the reference deposit (e.g. a single-nucleotide variant), which reflects
 > primer–target identity, not the design model.
+
+## Figure S — Tm concordance across GC content (`gc_concordance.py` / `plot_gc_concordance.py`)
+
+Independent validation of the LAMPrime melting-temperature engine over a panel of
+**13 published LAMP primer sets designed by other tools** (Eiken PrimerExplorer
+V3/V4/V5 or NEB — none by LAMPrime), spanning **~30–67 % amplicon GC** and **12
+organisms**. For every oligo the LAMPrime Tm (`concordance.tm`; SantaLucia 1998 +
+von Ahsen 2001) is compared with an independent implementation (BioPython
+`Tm_NN`, NN4 = SantaLucia & Hicks 2004; Owczarzy 2004 salt) under identical
+conditions (Na⁺ 50 mM, Mg²⁺ 8 mM, dNTP 1.4 mM; effective 12.5 nM).
+
+Each set was QC-mapped onto its GenBank target (the primers form a compact
+~180–240 nt LAMP amplicon; the reported %GC is that of the F3–B3 amplicon).
+Primer sequences are verbatim from the cited sources (DOIs in the header of
+`gc_concordance.py`); targets are versioned under `tools/data/` (the amplicon
+region for large genomes).
+
+- **Panel A** — per-oligo agreement: LAMPrime Tm vs BioPython Tm on the identity
+  line (n = 73 oligos, 13 assays; Pearson r = 0.99999; max |ΔTm| = 0.15 °C).
+- **Panel B** — ΔTm (LAMPrime − BioPython) vs amplicon GC: the agreement is flat
+  and tight (|ΔTm| ≤ ~0.15 °C, mostly within ±0.1 °C) across the whole 30–67 % GC
+  range, i.e. the engine is not biased by base composition.
+
+Sets (by amplicon GC): *Plasmodium vivax* cox1 (Britton 2016, NEB); *Entamoeba
+histolytica* SREHP (Elias 2020); *Plasmodium falciparum* 18S (Mohon 2014, PE V4);
+*Babesia bovis* cytb (Arnuphapprasert 2023, PE V5); SARS-CoV-2 S (Prakash 2023)
+and ORF1ab (Huang 2020, PE); *Escherichia coli* malB (Hill 2008, PE v3); Zika
+virus E (Calvert 2017, PE V5); *Anaplasma marginale* msp1b (Giglioti 2018);
+*Xanthomonas citri* (Webster 2022, PE V5); *Pseudomonas aeruginosa* ecfX (He
+2025, PE V5); *Mycobacterium tuberculosis* IS6110 (Bentaleb 2016); *Mycobacterium
+kansasii* rpoB (Chen 2021, PE V4).
+
+Reproduce: `python tools/gc_concordance.py && python tools/plot_gc_concordance.py`.
