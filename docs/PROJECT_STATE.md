@@ -6,6 +6,21 @@
 > trabalho de uma sessão anterior foi perdido ao reciclar o container. **Para não se perder de novo, este
 > arquivo precisa ser commitado no repositório.**
 
+## Sessão 2026-07-21
+Rodada de execução (grupo A + #8 + verificação ao vivo). Ver CHANGELOG 2026-07-21.
+- **A1 — caixas `AB?` travadas:** delta ancorado em **AB = v1.3 (`b3861af`)** por ancestralidade git
+  (`git merge-base --is-ancestor`); `CHANGES_AB_to_BBRep.md` §3 preenchido ([x] = na AB; [ ] = delta
+  2026-07-16) e o item de âncora da §5 marcado.
+- **A2 — item NEB / PrimerExplorer V5 detalhado** (ver abaixo): constraints conferidas no `app.js`;
+  o que resta é citação primária + decisão de enquadramento (autor).
+- **A3 — CHANGELOG corrigido:** a entrada "Housekeeping 2026-07-17" dizia deploy via `assets/`, mas o
+  PR #5 reverteu para **raiz achatada** — texto atualizado.
+- **#8 — timing FEITO (reproduzível):** novo `tools/timing.js`. Referência no container (Intel Xeon
+  @2,10 GHz, 4 núcleos, Node 22, 7 reps, mediana): **0,9–3,9 s/alvo** (msp1b 350 nt = 0,9 s;
+  B. bovis 18S 1651 nt = 3,9 s; P. falciparum 2090 nt = 3,5 s). Escala com o tamanho do alvo.
+- **#11 — reproduzido ao vivo:** BioPython instalável via pip (não vem no container). Publicados:
+  **máx. |d| = 0,09 °C ✓** (média 0,07); AT-rico P. falciparum: máx. 0,35 °C (faixa GC 10–65%).
+
 ## Sessão 2026-07-16
 Objetivo: retomar o backlog na ordem definida, preservando decisões e pendências.
 
@@ -59,7 +74,12 @@ ROC **parcial até os `.eds` do autor** (referência).
 - Registrado no CHANGELOG (v1.4).
 
 ### #8 — timing na máquina do autor
-- Status: ❌ **NÃO EXECUTÁVEL AQUI** (medição depende do hardware do autor).
+- Status: ✅ **FEITO / reproduzível** (2026-07-21). Novo `tools/timing.js` mede `designLAMP()` (o motor
+  do app via `crossreact.js`) sobre os alvos de desenho versionados, parâmetros default, mediana de N reps.
+- Referência no container (Intel Xeon @2,10 GHz, 4 núcleos, Node 22, 7 reps): **0,9–3,9 s/alvo**, escalando
+  com o tamanho (msp1b 350 nt = 0,9 s → B. bovis 18S 1651 nt = 3,9 s; P. falciparum 2090 nt = 3,5 s).
+- O **valor absoluto depende do hardware**: para o número canônico do manuscrito, o autor roda
+  `node tools/timing.js` na própria máquina — a ferramenta reproduzível resolve o bloqueio original.
 
 ### #9 — alvo AT-rico *P. falciparum* 18S
 - Status: ✅ **FEITO** (2026-07-16). FASTA `tools/data/pfalciparum_18s_M19172.fasta` (M19172.1, 2090 nt,
@@ -68,8 +88,24 @@ ROC **parcial até os `.eds` do autor** (referência).
   faixa usual de GC (acordo ≤ 0,31 °C). Sem conjunto de primers publicado embarcado (não fabricado);
   se o autor tiver um conjunto LAMP de 18S de *P. falciparum*, entra em `concordance.py`/`EXTRA_SETS`.
 
-### NEB / PrimerExplorer V5
-- Status: pendente — falta detalhar o que ainda precisa ser finalizado.
+### NEB / PrimerExplorer V5 — parametrização e citação
+- O que é: as constraints geométricas e as condições default do LAMPrime seguem o padrão **Eiken
+  PrimerExplorer V5 / NEB**. Valores implementados e **conferidos no código** (2026-07-21):
+  - Geometria (`app.js`): amplicon **F2–B2 = 120–180 nt**; gap **F3–F2 = 0–60 nt**; loops F2–F1 / B2–B1
+    = **40–60 nt**; centro **F1–B1 = 0–60 nt** (`distF2B2`, `distF3F2`, `distF1B1` + `geo.help` PT/EN).
+  - Termodinâmica default (condição NEB): **Na⁺ 50 mM, Mg²⁺ 8 mM, dNTP 1,4 mM, oligo 50 nM**; janela
+    interna **64–66 °C**, externa **59–61 °C** (`tmF1cB1cLfLbMin/Max`, `tmF2B2F3B3Min/Max`).
+- O que falta finalizar (não é código — é citação/enquadramento no manuscrito):
+  1. **Citar as fontes primárias** com precisão: guia oficial do Eiken PrimerExplorer V5 (regras de
+     distância/Tm) e o protocolo LAMP da NEB (condição de reação) — hoje o repo cita "Eiken
+     PrimerExplorer V5" e "NEB condition" em texto, sem referência formal numerada.
+  2. **Decisão de enquadramento (autor):** o texto afirma **paridade estrita** com o PrimerExplorer V5
+     ou "constraints **inspiradas** no PrimerExplorer V5 / NEB"? Declarar "inspirado em" é defensável e
+     evita supor paridade não verificada com a ferramenta fechada da Eiken.
+  3. Opcional: promover o preset **120–160 bp (PrimerExplorer/NEB)** já presente na UI (`geo.opt.120160`)
+     como faixa recomendada, documentando a escolha.
+- Status: **detalhado** (2026-07-21). O núcleo (constraints no código) está implementado e conferido;
+  itens 1–2 dependem do manuscrito/decisão do autor.
 
 ### Sync `manuscript_PT.md`
 - Status: **BLOQUEADO** — `manuscript_PT.md` ❌ não está no repo.
@@ -88,8 +124,10 @@ ROC **parcial até os `.eds` do autor** (referência).
 ## Pendências / itens em aberto
 - ✅ **RESOLVIDO:** `tools/concordance.py` dizia **"Giglioti 2019"** (linhas 81, 108, 177) contra
   README/LEGENDS já em **2018** (commits `c5326cc`/`b74b124`). Corrigido para 2018 (2026-07-16).
-- Inputs ausentes que bloqueiam o backlog: **BioPython** (não instalado), conjuntos **PrimerDigital**,
-  `.eds` (referência da ROC), `manuscript_PT.md`, `build_paper`.
+- Inputs ausentes que bloqueiam o backlog: conjuntos **PrimerDigital** (slot `EXTRA_SETS`),
+  `.eds` (referência da ROC, hook `ROC_REFERENCE`), `manuscript_PT.md`, `build_paper`.
+- **BioPython:** não vem no container efêmero, mas é `pip install biopython` (ou o env conda do autor:
+  `datascience`/`base`). Instalado e usado em 2026-07-21 para reproduzir o #11 ao vivo (publicados máx. |d| 0,09 °C).
 
 ## Decisões preservadas (agora decifradas via arquivos do AB, 2026-07-16)
 - **BBRep/APC** = alvo **Biochemistry and Biophysics Reports** (open-access, APC).

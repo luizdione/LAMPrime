@@ -73,11 +73,16 @@ adequado ao BBRep.
 Legenda de status: **base** = fundação do projeto · **novo** = adicionado nesta evolução ·
 **alterado** = comportamento mudou. Marque **`AB? [x]`** se já constava na submissão AB.
 
+> **Âncora travada (2026-07-21).** Delta confirmado: **AB = v1.3 (`b3861af`, 24/06/2026)** — ver §4 e
+> `PROJECT_STATE.md`. Caixas preenchidas por **ancestralidade git** (`git merge-base --is-ancestor … b3861af`):
+> **`AB? [x]`** = já constava na submissão AB (commit ≤ v1.3); **`AB? [ ]`** = **delta pós-AB** (commits de
+> 2026-07-16). Como todas as caixas foram travadas, uma caixa vazia significa "confirmado fora da AB", não "a decidir".
+
 ### 3.1 Motor termodinâmico (Tm)
 | Componente | O que é | Status | Por que fortalece | Evidência |
 |---|---|---|---|---|
-| NN SantaLucia 1998 + sal | Tm por vizinho-mais-próximo, correção de sal | base `AB? [ ]` | núcleo do método | `app.js tmNN`, `concordance.py` |
-| Mg²⁺→Na⁺ (von Ahsen 2001) | equivalente monovalente de Mg²⁺ | base `AB? [ ]` | condição NEB realista | `app.js`, `README` |
+| NN SantaLucia 1998 + sal | Tm por vizinho-mais-próximo, correção de sal | base `AB? [x]` | núcleo do método | `app.js tmNN`, `concordance.py` |
+| Mg²⁺→Na⁺ (von Ahsen 2001) | equivalente monovalente de Mg²⁺ | base `AB? [x]` | condição NEB realista | `app.js`, `README` |
 | **Unificação do Mg²⁺ livre (#6)** | `tmNN` passa a usar quelação `freeMgM` (Ka=3e4), como a varredura | **alterado** `AB? [ ]` | remove incoerência entre caminhos; corrige colapso do Tm na estequiometria | commit `4e96ed9`, `CHANGELOG v1.4` |
 | **Incerteza de Tm (#12)** | 1998 vs 2004 (=robustez, Δ=0); sensibilidade sal/Mg; ±2 °C | **novo** `AB? [ ]` | quantifica incerteza — resposta clássica de revisor | `tools/tm_uncertainty.py` |
 | **Benchmark independente (#11)** | Tm vs Biopython (NN4) — acordo ≤ 0,09 °C | **novo** `AB? [ ]` | validação por terceiro | `tools/benchmark_independent.py` |
@@ -85,29 +90,29 @@ Legenda de status: **base** = fundação do projeto · **novo** = adicionado nes
 ### 3.2 Otimização de Mg²⁺ (varredura → heatmap)
 | Componente | O que é | Status | Por que fortalece | Evidência |
 |---|---|---|---|---|
-| Varredura Mg²⁺ × especificidade | heatmap por primer ao longo do MgSO₄ | novo (v1.2) `AB? [ ]` | escolhe [Mg²⁺] de trabalho | commit `2b63996`, `tools/mgspec.mjs` |
-| Owczarzy 2008 + Allawi/Peyret | correção divalente + NN de mismatch interno | novo (v1.2) `AB? [ ]` | Tm de off-target fisicamente correto | `app.js` (bloco Mg-spec) |
-| Margem de segurança (T_reação − Tm_off) | heatmap colore pela segurança do off-target | **alterado** (v1.3) `AB? [ ]` | sugere Mg que mantém on-target funcional e off-target abaixo da reação | commit `c981bf3`, `CHANGELOG v1.3` |
+| Varredura Mg²⁺ × especificidade | heatmap por primer ao longo do MgSO₄ | novo (v1.2) `AB? [x]` | escolhe [Mg²⁺] de trabalho | commit `2b63996`, `tools/mgspec.mjs` |
+| Owczarzy 2008 + Allawi/Peyret | correção divalente + NN de mismatch interno | novo (v1.2) `AB? [x]` | Tm de off-target fisicamente correto | `app.js` (bloco Mg-spec) |
+| Margem de segurança (T_reação − Tm_off) | heatmap colore pela segurança do off-target | **alterado** (v1.3) `AB? [x]` | sugere Mg que mantém on-target funcional e off-target abaixo da reação | commit `c981bf3`, `CHANGELOG v1.3` |
 
 ### 3.3 Triagem de especificidade
 | Componente | O que é | Status | Por que fortalece | Evidência |
 |---|---|---|---|---|
-| Aba de Especificidade | semente 3′ exata + extensão k-mer/alinhamento; FASTA/NCBI | novo `AB? [ ]` | prevê reatividade cruzada in silico | commit `402e016`, `README` |
-| Presets de reatividade cruzada | *A. marginale* vs *A. centrale*; *B. bovis* vs *B. bigemina* | novo (v1.1) `AB? [ ]` | benchmark reprodutível | commit `a7fdeee`, `tools/crossreact.js` |
+| Aba de Especificidade | semente 3′ exata + extensão k-mer/alinhamento; FASTA/NCBI | novo `AB? [x]` | prevê reatividade cruzada in silico | commit `402e016`, `README` |
+| Presets de reatividade cruzada | *A. marginale* vs *A. centrale*; *B. bovis* vs *B. bigemina* | novo (v1.1) `AB? [x]` | benchmark reprodutível | commit `a7fdeee`, `tools/crossreact.js` |
 | **Métricas sens/spec/ROC (#13)** | especificidade 0,980; sensibilidade do screen 1,000; pAUC parcial | **novo** `AB? [ ]` | torna a especificidade *mensurável*; `.eds` = referência (hook pronto) | `tools/specificity_metrics.py` |
 
 ### 3.4 Validação & reprodutibilidade
 | Componente | O que é | Status | Por que fortalece | Evidência |
 |---|---|---|---|---|
-| `concordance.py` offline | re-pontua conjuntos publicados; FASTAs versionados | base `AB? [ ]` | reprodutível sem rede | `tools/concordance.py`, `tools/data/` |
-| 3 conjuntos publicados | *A. marginale* msp1b; SARS-CoV-2 S; *M. tuberculosis* IS6110 | base `AB? [ ]` | ancoragem experimental | `LEGENDS.md` |
+| `concordance.py` offline | re-pontua conjuntos publicados; FASTAs versionados | base `AB? [x]` | reprodutível sem rede | `tools/concordance.py`, `tools/data/` |
+| 3 conjuntos publicados | *A. marginale* msp1b; SARS-CoV-2 S; *M. tuberculosis* IS6110 | base `AB? [x]` | ancoragem experimental | `LEGENDS.md` |
 | `concordance.py` importável | execução sob `__main__`; fonte única p/ os outros scripts | **novo** `AB? [ ]` | evita duplicação de sequências/motor | commit `3a7eef6` |
 | Correção ano Giglioti 2019→2018 | consistência com README/LEGENDS | **alterado** `AB? [ ]` | erro de citação corrigido | commit `3a7eef6` |
 
 ### 3.5 Alvos
 | Alvo | Papel | Status | Evidência |
 |---|---|---|---|
-| *A. marginale* msp1b, *B. bovis* 18S/cytB, *M. tuberculosis* IS6110, SARS-CoV-2 N/S | desenho/validação | base `AB? [ ]` | `tools/data/` |
+| *A. marginale* msp1b, *B. bovis* 18S/cytB, *M. tuberculosis* IS6110, SARS-CoV-2 N/S | desenho/validação | base `AB? [x]` | `tools/data/` |
 | **_P. falciparum_ 18S (M19172.1) — AT-rico (#9)** | estresse de baixo GC (AT 64,4%) | **novo** | `tools/data/pfalciparum_18s_M19172.fasta`, usado no benchmark #11 |
 
 ---
@@ -128,7 +133,7 @@ Tudo abaixo está **commitado** na branch `claude/pmm-active-memory-reload-xcptp
 
 ## 5. Pendências para fechar a submissão BBRep
 
-- [ ] **Ancorar o delta**: confirmar qual commit/data = submissão AB (para preencher as caixas `AB?`).
+- [x] **Ancorar o delta**: confirmado **AB = v1.3 (`b3861af`, 24/06/2026)**; caixas `AB?` da §3 preenchidas por ancestralidade git (commits de 2026-07-16 = delta pós-AB). ✅ 2026-07-21
 - [ ] **Sincronizar `manuscript_PT.md`** com os itens da §4 (o texto não está no repo — me forneça).
 - [ ] **#13** finalizar métricas + **ROC completa** com os `.eds` de referência do autor.
 - [ ] **#11** incluir conjuntos **PrimerDigital** (slot `EXTRA_SETS` pronto).
